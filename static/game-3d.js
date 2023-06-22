@@ -75,12 +75,20 @@ $("#start-button").on('click', gameStart);
 
 let movement = {};
 $(document).on('keydown keyup', (event) => {
-    const KeyToCommand = {
-        'ArrowUp': 'forward',
-        'ArrowDown': 'back',
-        'ArrowLeft': 'left',
-        'ArrowRight': 'right',
-    };
+	const KeyToCommand = {
+		'ArrowUp':		'r_forward',
+		'ArrowDown':	'r_back',
+		'ArrowLeft':	'r_left',
+		'ArrowRight':	'r_right',
+		'W':			'm_forward',
+		'S':			'm_back',
+		'A':			'm_left',
+		'D':			'm_right',
+		'w':			'm_forward',
+		's':			'm_back',
+		'a':			'm_left',
+		'd':			'm_right',
+	};
     const command = KeyToCommand[event.key];
     if(command){
         if(event.type === 'keydown'){

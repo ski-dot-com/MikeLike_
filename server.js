@@ -20,11 +20,13 @@ class GameObject{
         this.height = obj.height;
         this.angle = obj.angle;
     }
-    move(distance){
+    move(distance_x, distance_y=0){
         const oldX = this.x, oldY = this.y;
         
-        this.x += distance * Math.cos(this.angle);
-        this.y += distance * Math.sin(this.angle);
+        this.x += distance_x * Math.cos(this.angle);
+        this.y += distance_x * Math.sin(this.angle);
+        this.x -= distance_y * Math.sin(this.angle);
+        this.y += distance_y * Math.cos(this.angle);
         
         let collision = false;
         if(this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
@@ -178,16 +180,23 @@ io.on('connection', function(socket) {
 setInterval(() => {
     Object.values(players).forEach((player) => {
         const movement = player.movement;
-        if(movement.forward){
+        console.log(movement);
+        if(movement.m_forward){
             player.move(5);
         }
-        if(movement.back){
+        if(movement.m_back){
             player.move(-5);
         }
-        if(movement.left){
+        if(movement.m_right){
+            player.move(0,5);
+        }
+        if(movement.m_left){
+            player.move(0,-5);
+        }
+        if(movement.r_left){
             player.angle -= 0.1;
         }
-        if(movement.right){
+        if(movement.r_right){
             player.angle += 0.1;
         }
     });
