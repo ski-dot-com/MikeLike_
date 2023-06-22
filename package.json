@@ -1,0 +1,31 @@
+{
+  "name": "mikelike",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ski-dot-com/MikeLike_.git"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/ski-dot-com/MikeLike_/issues"
+  },
+  "homepage": "https://github.com/ski-dot-com/MikeLike_#readme",
+  "private": true,
+  "dependencies": {
+    "three": "^0.152.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.152.1",
+    "typescript": "^5.1.3",
+    "vite": "^4.3.9"
+  }
+}
