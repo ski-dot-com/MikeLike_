@@ -74,35 +74,38 @@ function gameStart(){
 $("#start-button").on('click', gameStart);
 
 let movement = {};
-$(document).on('keydown keyup', (event) => {
-	const KeyToCommand = {
-		'ArrowUp':		'r_forward',
-		'ArrowDown':	'r_back',
-		'ArrowLeft':	'r_left',
-		'ArrowRight':	'r_right',
-		'W':			'm_forward',
-		'S':			'm_back',
-		'A':			'm_left',
-		'D':			'm_right',
-		'w':			'm_forward',
-		's':			'm_back',
-		'a':			'm_left',
-		'd':			'm_right',
-	};
-    const command = KeyToCommand[event.key];
-    if(command){
-        if(event.type === 'keydown'){
-            movement[command] = true;
-        }else{ /* keyup */
-            movement[command] = false;
-        }
-        socket.emit('movement', movement);
-    }
-    if(event.key === ' ' && event.type === 'keydown'){
-        socket.emit('shoot');
-    }
-});
-
+{
+	/**
+	 * @param {KeyboardEvent} event 
+	 */
+	let tmp=(event) => {
+		const KeyToCommand = {
+			'ArrowUp':		'r_forward',
+			'ArrowDown':	'r_back',
+			'ArrowLeft':	'r_left',
+			'ArrowRight':	'r_right',
+			'KeyW':			'm_forward',
+			'KeyS':			'm_back',
+			'KeyA':			'm_left',
+			'KeyD':			'm_right',
+		};
+		//console.log(`key=${event.key},members=${[...Object.keys(event)]},code=${event.code}`)
+		const command = KeyToCommand[event.code];
+		if(command){
+			if(event.type === 'keydown'){
+				movement[command] = true;
+			}else{ /* keyup */
+				movement[command] = false;
+			}
+			socket.emit('movement', movement);
+		}
+		if(event.key === ' ' && event.type === 'keydown'){
+			socket.emit('shoot');
+		}
+	}
+	document.addEventListener("keydown",tmp)
+	document.addEventListener("keyup",tmp)
+}
 const touches = {};
 $('#canvas-2d').on('touchstart', (event)=>{
     socket.emit('shoot');
