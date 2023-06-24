@@ -8,7 +8,14 @@ const app = express();
 const server = http.Server(app);
 const io = socketIO(server);
 const yargs = require('yargs').argv;
-
+/**
+ * 
+ * @param {number} val value
+ * @param {number} min minimum
+ * @param {number} max maximum
+ * @returns 
+ */
+const clamp =(val,min,max)=>Math.min(max,Math.max(min,val))
 
 const FIELD_WIDTH = 1000, FIELD_HEIGHT = 1000;
 class GameObject{
@@ -18,15 +25,16 @@ class GameObject{
         this.y = obj.y;
         this.width = obj.width;
         this.height = obj.height;
-        this.angle = obj.angle;
+        this.angle_x = obj.angle_x;
+        this.angle_y = obj.angle_y;
     }
     move(distance_x, distance_y=0){
         const oldX = this.x, oldY = this.y;
         
-        this.x += distance_x * Math.cos(this.angle);
-        this.y += distance_x * Math.sin(this.angle);
-        this.x -= distance_y * Math.sin(this.angle);
-        this.y += distance_y * Math.cos(this.angle);
+        this.x += distance_x * Math.cos(this.angle_x);
+        this.y += distance_x * Math.sin(this.angle_x);
+        this.x -= distance_y * Math.sin(this.angle_x);
+        this.y += distance_y * Math.cos(this.angle_x);
         
         let collision = false;
         if(this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
@@ -50,7 +58,7 @@ class GameObject{
         return Object.values(walls).some((wall) => this.intersect(wall));
     }
     toJSON(){
-        return {id: this.id, x: this.x, y: this.y, width: this.width, height: this.height, angle: this.angle};
+        return {id: this.id, x: this.x, y: this.y, width: this.width, height: this.height, angle_x: this.angle_x, angle_y: this.angle_y};
     }
 }
 
@@ -65,11 +73,13 @@ class Player extends GameObject{
         this.bullets = {};
         this.point = 0;
         this.movement = {};
-
+        this.angle_y = 0;
         do{
             this.x = Math.random() * (FIELD_WIDTH - this.width);
             this.y = Math.random() * (FIELD_HEIGHT - this.height);
-            this.angle = Math.random() * 2 * Math.PI;
+            this.angle_x = //Math.random() * 2 * Math.PI;/*
+            0
+            //*/
         }while(this.intersectWalls());
     }
     shoot(){
@@ -79,7 +89,7 @@ class Player extends GameObject{
         const bullet = new Bullet({
             x: this.x + this.width/2,
             y: this.y + this.height/2,
-            angle: this.angle,
+            angle_x: this.angle_x,
             player: this,
         });
         bullet.move(this.width/2);
@@ -117,7 +127,7 @@ class BotPlayer extends Player{
         super(obj);
         this.timer = setInterval(() => {
             if(! this.move(4)){
-                this.angle = Math.random() * Math.PI * 2;
+                this.angle_x = Math.random() * Math.PI * 2;
             }
             if(Math.random()<0.03){
                 this.shoot();
@@ -180,7 +190,7 @@ io.on('connection', function(socket) {
 setInterval(() => {
     Object.values(players).forEach((player) => {
         const movement = player.movement;
-        console.log(movement);
+        // console.log(movement);
         if(movement.m_forward){
             player.move(5);
         }
@@ -193,11 +203,20 @@ setInterval(() => {
         if(movement.m_left){
             player.move(0,-5);
         }
+        if(movement.r_up){
+            console.log("r_up")
+            player.angle_y += 0.1;
+        }
+        if(movement.r_down){
+            console.log("r_down")
+            player.angle_y -= 0.1;
+        }
+        player.angle_y=clamp(player.angle_y,-Math.PI/2,Math.PI/2)
         if(movement.r_left){
-            player.angle -= 0.1;
+            player.angle_x -= 0.1;
         }
         if(movement.r_right){
-            player.angle += 0.1;
+            player.angle_x += 0.1;
         }
     });
     Object.values(bullets).forEach((bullet) =>{
@@ -227,5 +246,6 @@ app.get('/', (request, response) => {
 
 const port = parseInt(yargs.port) || 3000;
 server.listen(port, () => {
-  console.log(`Starting server on port ${port}`);
+    console.log(`Starting server on port ${port}`);
+    console.log(`URL: http://localhost:${port}`);
 });

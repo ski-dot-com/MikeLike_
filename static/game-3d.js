@@ -11,6 +11,8 @@ renderer.shadowMap.enabled = true;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera( 100, 1, 0.1, 2000 );
 
+const isFPS=true;
+
 // Floor
 const floorGeometry = new THREE.PlaneGeometry(1000, 1000, 1, 1);
 const floorMaterial = new THREE.MeshLambertMaterial({color : 'lawngreen'});
@@ -22,7 +24,8 @@ scene.add(floorMesh);
 
 camera.position.set(1000, 300, 1000);
 camera.lookAt(floorMesh.position);
-
+camera.matrixAutoUpdate = false;
+camera.updateMatrix();
 // Materials
 const bulletMaterial = new THREE.MeshLambertMaterial( { color: 0x808080 } );
 const wallMaterial = new THREE.MeshLambertMaterial( { color: 'firebrick' } );
@@ -80,8 +83,8 @@ let movement = {};
 	 */
 	let tmp=(event) => {
 		const KeyToCommand = {
-			'ArrowUp':		'r_forward',
-			'ArrowDown':	'r_back',
+			'ArrowUp':		'r_up',
+			'ArrowDown':	'r_down',
 			'ArrowLeft':	'r_left',
 			'ArrowRight':	'r_right',
 			'KeyW':			'm_forward',
@@ -154,7 +157,8 @@ socket.on('state', (players, bullets, walls) => {
         }
         playerMesh.used = true;
         playerMesh.position.set(player.x + player.width/2, player.width/2, player.y + player.height/2);
-		playerMesh.rotation.y = - player.angle;
+		playerMesh.rotation.y = - player.angle_x;
+		playerMesh.rotation.z = player.angle_y;
         
         if(!playerMesh.getObjectByName('body')){
             console.log('create body mesh');
@@ -205,13 +209,16 @@ socket.on('state', (players, bullets, walls) => {
         
         if(player.socketId === socket.id){
             // Your player
+            const tmp=150*!isFPS
 			camera.position.set(
-			    player.x + player.width/2 - 150 * Math.cos(player.angle),
-			    200,
-                player.y + player.height/2 - 150 * Math.sin(player.angle)
+			    player.x + player.width/2 - tmp * Math.cos(player.angle_x) * Math.cos(player.angle_y),
+			    player.width/2 - tmp * Math.sin(player.angle_y),
+                player.y + player.height/2 - tmp * Math.sin(player.angle_x) * Math.cos(player.angle_y)
             );
-			camera.rotation.set(0, - player.angle - Math.PI/2, 0);
-			
+			camera.rotation.set(0, - player.angle_x - Math.PI/2, 0);
+            camera.updateMatrix();
+            camera.matrix.multiply(new THREE.Matrix4().makeRotationX(player.angle_y));
+		    // camera.rotation.set(player.angle_y, 0, 0);
 			// Write to 2D canvas
             context.clearRect(0, 0, canvas2d.width, canvas2d.height);
             context.font = '30px Bold Arial';

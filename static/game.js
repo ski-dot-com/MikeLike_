@@ -94,7 +94,7 @@ socket.on('state', function(players, bullets, walls) {
 		context.fillStyle = "red";
 		context.fillText('♥'.repeat(player.health), player.x, player.y + player.height + 10);
 		context.translate(player.x + player.width/2, player.y + player.height/2);
-		context.rotate(player.angle);
+		context.rotate(player.angle_x);
 		context.drawImage(playerImage, 0, 0, playerImage.width, playerImage.height, -player.width/2, -player.height/2, player.width, player.height);
 		context.restore();
 		
