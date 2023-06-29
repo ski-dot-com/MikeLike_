@@ -72,7 +72,23 @@ animate();
 function gameStart(){
     socket.emit('game-start', {nickname: $("#nickname").val() });
     $("#start-screen").hide();
+    canvas2d.requestPointerLock();
+    isPlaying=isPointerLocked=true;
 }
+var isPointerLocked=false;
+var isPlaying=false;
+canvas2d.addEventListener("fullscreenchange",()=>{
+    if(document.pointerLockElement==canvas2d){
+        isPointerLocked=true;
+    }else{
+        isPointerLocked=false;
+    }
+});
+canvas2d.addEventListener("click",()=>{
+    if(isPlaying&&!isPointerLocked){
+
+    }
+})
 $("#start-button").on('click', gameStart);
 
 let movement = {};
@@ -271,5 +287,7 @@ socket.on('state', (players, bullets, walls) => {
 });
 
 socket.on('dead', () => {
+    document.exitPointerLock();
     $("#start-screen").show();
+    isPlaying=false;
 });
