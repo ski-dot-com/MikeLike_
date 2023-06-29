@@ -77,9 +77,7 @@ class Player extends GameObject{
         do{
             this.x = Math.random() * (FIELD_WIDTH - this.width);
             this.y = Math.random() * (FIELD_HEIGHT - this.height);
-            this.angle_x = //Math.random() * 2 * Math.PI;/*
-            0
-            //*/
+            this.angle_x = Math.random() * 2 * Math.PI;
         }while(this.intersectWalls());
     }
     shoot(){
@@ -204,11 +202,11 @@ setInterval(() => {
             player.move(0,-5);
         }
         if(movement.r_up){
-            console.log("r_up")
+            //console.log("r_up")
             player.angle_y += 0.1;
         }
         if(movement.r_down){
-            console.log("r_down")
+            //console.log("r_down")
             player.angle_y -= 0.1;
         }
         player.angle_y=clamp(player.angle_y,-Math.PI/2,Math.PI/2)
