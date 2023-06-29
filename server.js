@@ -15,12 +15,12 @@ const yargs = require('yargs').argv;
  * @param {number} max maximum
  * @returns 
  */
-const clamp =(val,min,max)=>Math.min(max,Math.max(min,val))
+const clamp = (val, min, max) => Math.min(max, Math.max(min, val))
 
 const FIELD_WIDTH = 1000, FIELD_HEIGHT = 1000;
-class GameObject{
-    constructor(obj={}){
-        this.id = Math.floor(Math.random()*1000000000);
+class GameObject {
+    constructor(obj = {}) {
+        this.id = Math.floor(Math.random() * 1000000000);
         this.x = obj.x;
         this.y = obj.y;
         this.width = obj.width;
@@ -28,42 +28,42 @@ class GameObject{
         this.angle_x = obj.angle_x;
         this.angle_y = obj.angle_y;
     }
-    move(distance_x, distance_y=0){
+    move(distance_x, distance_y = 0) {
         const oldX = this.x, oldY = this.y;
-        
+
         this.x += distance_x * Math.cos(this.angle_x);
         this.y += distance_x * Math.sin(this.angle_x);
         this.x -= distance_y * Math.sin(this.angle_x);
         this.y += distance_y * Math.cos(this.angle_x);
-        
+
         let collision = false;
-        if(this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
+        if (this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT) {
             collision = true;
         }
-        if(this.intersectWalls()){
+        if (this.intersectWalls()) {
             collision = true;
         }
-        if(collision){
+        if (collision) {
             this.x = oldX; this.y = oldY;
         }
         return !collision;
     }
-    intersect(obj){
+    intersect(obj) {
         return (this.x <= obj.x + obj.width) &&
             (this.x + this.width >= obj.x) &&
             (this.y <= obj.y + obj.height) &&
             (this.y + this.height >= obj.y);
     }
-    intersectWalls(){
+    intersectWalls() {
         return Object.values(walls).some((wall) => this.intersect(wall));
     }
-    toJSON(){
-        return {id: this.id, x: this.x, y: this.y, width: this.width, height: this.height, angle_x: this.angle_x, angle_y: this.angle_y};
+    toJSON() {
+        return { id: this.id, x: this.x, y: this.y, width: this.width, height: this.height, angle_x: this.angle_x, angle_y: this.angle_y };
     }
 }
 
-class Player extends GameObject{
-    constructor(obj={}){
+class Player extends GameObject {
+    constructor(obj = {}) {
         super(obj);
         this.socketId = obj.socketId;
         this.nickname = obj.nickname;
@@ -74,94 +74,94 @@ class Player extends GameObject{
         this.point = 0;
         this.movement = {};
         this.angle_y = 0;
-        do{
+        do {
             this.x = Math.random() * (FIELD_WIDTH - this.width);
             this.y = Math.random() * (FIELD_HEIGHT - this.height);
             this.angle_x = Math.random() * 2 * Math.PI;
-        }while(this.intersectWalls());
+        } while (this.intersectWalls());
     }
-    shoot(){
-        if(Object.keys(this.bullets).length >= 3){
+    shoot() {
+        if (Object.keys(this.bullets).length >= 3) {
             return;
         }
         const bullet = new Bullet({
-            x: this.x + this.width/2,
-            y: this.y + this.height/2,
+            x: this.x + this.width / 2,
+            y: this.y + this.height / 2,
             angle_x: this.angle_x,
             player: this,
         });
-        bullet.move(this.width/2);
+        bullet.move(this.width / 2);
         this.bullets[bullet.id] = bullet;
         bullets[bullet.id] = bullet;
     }
-    damage(){
-        this.health --;
-        if(this.health === 0){
+    damage() {
+        this.health--;
+        if (this.health === 0) {
             this.remove();
         }
     }
-    remove(){
+    remove() {
         delete players[this.id];
         io.to(this.socketId).emit('dead');
     }
-    toJSON(){
-        return Object.assign(super.toJSON(), {health: this.health, maxHealth: this.maxHealth, socketId: this.socketId, point: this.point, nickname: this.nickname});
+    toJSON() {
+        return Object.assign(super.toJSON(), { health: this.health, maxHealth: this.maxHealth, socketId: this.socketId, point: this.point, nickname: this.nickname });
     }
 }
-class Bullet extends GameObject{
-    constructor(obj){
+class Bullet extends GameObject {
+    constructor(obj) {
         super(obj);
         this.width = 15;
         this.height = 15;
         this.player = obj.player;
     }
-    remove(){
+    remove() {
         delete this.player.bullets[this.id];
         delete bullets[this.id];
     }
 }
-class BotPlayer extends Player{
-    constructor(obj){
+class BotPlayer extends Player {
+    constructor(obj) {
         super(obj);
         this.timer = setInterval(() => {
-            if(! this.move(4)){
+            if (!this.move(4)) {
                 this.angle_x = Math.random() * Math.PI * 2;
             }
-            if(Math.random()<0.03){
+            if (Math.random() < 0.03) {
                 this.shoot();
             }
-        }, 1000/30);
+        }, 1000 / 30);
     }
-    remove(){
+    remove() {
         super.remove();
         clearInterval(this.timer);
         setTimeout(() => {
-            const bot = new BotPlayer({nickname: this.nickname});
+            const bot = new BotPlayer({ nickname: this.nickname });
             players[bot.id] = bot;
         }, 3000);
     }
 }
-class Wall extends GameObject{
+class Wall extends GameObject {
 }
 
 let players = {};
 let bullets = {};
 let walls = {};
 
-for(let i=0; i<3; i++){
+for (let i = 0; i < 3; i++) {
     const wall = new Wall({
-            x: Math.random() * FIELD_WIDTH,
-            y: Math.random() * FIELD_HEIGHT,
-            width: 200,
-            height: 50,
+        x: Math.random() * FIELD_WIDTH,
+        y: Math.random() * FIELD_HEIGHT,
+        width: 200,
+        height: 50,
     });
     walls[wall.id] = wall;
 }
 
-const bot = new BotPlayer({nickname: 'bot'});
+const bot = new BotPlayer({ nickname: 'bot' });
 players[bot.id] = bot;
 
-io.on('connection', function(socket) {
+io.on('connection', function (socket) {
     let player = null;
     socket.on('game-start', (config) => {
         player = new Player({
@@ -170,16 +170,16 @@ io.on('connection', function(socket) {
         });
         players[player.id] = player;
     });
-    socket.on('movement', function(movement) {
-        if(!player || player.health===0){return;}
+    socket.on('movement', function (movement) {
+        if (!player || player.health === 0) { return; }
         player.movement = movement;
     });
-    socket.on('shoot', function(){
-        if(!player || player.health===0){return;}
+    socket.on('shoot', function () {
+        if (!player || player.health === 0) { return; }
         player.shoot();
     });
     socket.on('disconnect', () => {
-        if(!player){return;}
+        if (!player) { return; }
         delete players[player.id];
         player = null;
     });
@@ -189,57 +189,65 @@ setInterval(() => {
     Object.values(players).forEach((player) => {
         const movement = player.movement;
         // console.log(movement);
-        if(movement.m_forward){
+        if (movement.m_forward) {
             player.move(5);
         }
-        if(movement.m_back){
+        if (movement.m_back) {
             player.move(-5);
         }
-        if(movement.m_right){
-            player.move(0,5);
+        if (movement.m_right) {
+            player.move(0, 5);
         }
-        if(movement.m_left){
-            player.move(0,-5);
+        if (movement.m_left) {
+            player.move(0, -5);
         }
-        if(movement.r_up){
+        if (movement.r_up) {
             //console.log("r_up")
             player.angle_y += 0.1;
         }
-        if(movement.r_down){
+        if (movement.r_down) {
             //console.log("r_down")
             player.angle_y -= 0.1;
         }
-        player.angle_y=clamp(player.angle_y,-Math.PI/2,Math.PI/2)
-        if(movement.r_left){
+        if (movement.r_left) {
             player.angle_x -= 0.1;
         }
-        if(movement.r_right){
+        if (movement.r_right) {
             player.angle_x += 0.1;
         }
+        if (movement.r_dx) {
+            player.angle_x += movement.r_dx;
+            movement.r_dx = 0;
+        }
+        if (movement.r_dy) {
+            player.angle_y -= movement.r_dy;
+            movement.r_dy = 0;
+        }
+        player.angle_y = clamp(player.angle_y, -Math.PI / 2, Math.PI / 2)
     });
-    Object.values(bullets).forEach((bullet) =>{
-        if(! bullet.move(10)){
+    Object.values(bullets).forEach((bullet) => {
+        if (!bullet.move(10)) {
             bullet.remove();
             return;
         }
         Object.values(players).forEach((player) => {
-           if(bullet.intersect(player)){
-               if(player !== bullet.player){
-                   player.damage();
-                   bullet.remove();
-                   bullet.player.point += 1;
-               }
-           } 
+            if (bullet.intersect(player)) {
+                if (player !== bullet.player) {
+                    player.damage();
+                    bullet.remove();
+                    bullet.player.point += 1;
+                }
+            }
         });
     });
     io.sockets.emit('state', players, bullets, walls);
-}, 1000/30);
+}, 1000 / 30);
 
 
 app.use('/static', express.static(__dirname + '/static'));
 
 app.get('/', (request, response) => {
-  response.sendFile(path.join(__dirname, '/static/3d.html'));
+    response.sendFile(path.join(__dirname, '/static/3d.html'));
 });
 
 const port = parseInt(yargs.port) || 3000;
