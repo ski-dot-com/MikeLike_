@@ -190,7 +190,7 @@ socket.on('state', (players, bullets, walls) => {
             scene.add(playerMesh);
         }
         playerMesh.used = true;
-        playerMesh.position.set(player.x + player.width / 2, player.width / 2, player.y + player.height / 2);
+        playerMesh.position.set(player.pos.x + player.width / 2, player.width / 2, player.pos.z + player.height / 2);
         playerMesh.rotation.y = - player.angle_x;
         playerMesh.rotation.z = player.angle_y;
 
@@ -245,9 +245,9 @@ socket.on('state', (players, bullets, walls) => {
             // Your player
             const tmp = 150 * !isFPS
             camera.position.set(
-                player.x + player.width / 2 - tmp * Math.cos(player.angle_x) * Math.cos(player.angle_y),
+                player.pos.x + player.width / 2 - tmp * Math.cos(player.angle_x) * Math.cos(player.angle_y),
                 player.width / 2 - tmp * Math.sin(player.angle_y),
-                player.y + player.height / 2 - tmp * Math.sin(player.angle_x) * Math.cos(player.angle_y)
+                player.pos.z + player.height / 2 - tmp * Math.sin(player.angle_x) * Math.cos(player.angle_y)
             );
             camera.rotation.set(0, - player.angle_x - Math.PI / 2, 0);
             camera.updateMatrix();
@@ -272,7 +272,7 @@ socket.on('state', (players, bullets, walls) => {
             scene.add(mesh);
         }
         mesh.used = true;
-        mesh.position.set(bullet.x + bullet.width / 2, 80, bullet.y + bullet.height / 2);
+        mesh.position.set(bullet.pos.x + bullet.width / 2, 80, bullet.pos.z + bullet.height / 2);
     });
 
     // Walls
@@ -286,7 +286,7 @@ socket.on('state', (players, bullets, walls) => {
             scene.add(mesh);
         }
         mesh.used = true;
-        mesh.position.set(wall.x + wall.width / 2, 50, wall.y + wall.height / 2);
+        mesh.position.set(wall.pos.x + wall.width / 2, 50, wall.pos.z + wall.height / 2);
     });
 
     // Clear unused Meshes

@@ -30,10 +30,11 @@ class GameObject {
          * @type {number}
          */
         this.id = Math.floor(Math.random() * 1000000000);
+        obj.pos||={}
         /**
          * @type {THREE.Vector3}
          */
-        this.pos=new Vector3(obj.pos.x,obj.pos.y,obj.z||0);
+        this.pos=new Vector3(obj.pos.x,obj.pos.y,obj.pos.z);
         /**
          * @type {number}
          */
@@ -52,36 +53,36 @@ class GameObject {
         this.angle_y = obj.angle_y;
     }
     move(distance_x, distance_y = 0) {
-        const old_pos=this.pos.copy();
+        const old_pos=this.pos.clone();
 
         this.pos.x += distance_x * Math.cos(this.angle_x);
-        this.pos.y += distance_x * Math.sin(this.angle_x);
+        this.pos.z += distance_x * Math.sin(this.angle_x);
         this.pos.x -= distance_y * Math.sin(this.angle_x);
-        this.pos.y += distance_y * Math.cos(this.angle_x);
+        this.pos.z += distance_y * Math.cos(this.angle_x);
 
         let collision = false;
-        if (this.pos.x < 0 || this.pos.x + this.width >= FIELD_WIDTH || this.pos.y < 0 || this.pos.y + this.height >= FIELD_HEIGHT) {
+        if (this.pos.x < 0 || this.pos.x + this.width >= FIELD_WIDTH || this.pos.z < 0 || this.pos.z + this.height >= FIELD_HEIGHT) {
             collision = true;
         }
         if (this.intersectWalls()) {
             collision = true;
         }
         if (collision) {
-            this.pos.x = oldX; this.pos.y = oldY;
+            this.pos.x = old_pos.x; this.pos.z = old_pos.z;
         }
         return !collision;
     }
     intersect(obj) {
         return (this.pos.x <= obj.pos.x + obj.width) &&
             (this.pos.x + this.width >= obj.pos.x) &&
-            (this.pos.y <= obj.pos.y + obj.height) &&
-            (this.pos.y + this.height >= obj.pos.y);
+            (this.pos.z <= obj.pos.z + obj.height) &&
+            (this.pos.z + this.height >= obj.pos.z);
     }
     intersectWalls() {
         return Object.values(walls).some((wall) => this.intersect(wall));
     }
     toJSON() {
-        return { id: this.id, pos: this.pos.toJSON(), width: this.width, height: this.height, angle_x: this.angle_x, angle_y: this.angle_y };
+        return { id: this.id, pos: this.pos, width: this.width, height: this.height, angle_x: this.angle_x, angle_y: this.angle_y };
     }
 }
 class Player extends GameObject {
@@ -98,7 +99,7 @@ class Player extends GameObject {
         this.angle_y = 0;
         do {
             this.pos.x = Math.random() * (FIELD_WIDTH - this.width);
-            this.pos.y = Math.random() * (FIELD_HEIGHT - this.height);
+            this.pos.z = Math.random() * (FIELD_HEIGHT - this.height);
             this.angle_x = Math.random() * 2 * Math.PI;
         } while (this.intersectWalls());
     }
@@ -107,7 +108,7 @@ class Player extends GameObject {
             return;
         }
         const bullet = new Bullet({
-            pos:this.pos.copy().add(new Vector3(this.width / 2,this.height / 2)),
+            pos:this.pos.clone().add(new Vector3(this.width / 2,this.height / 2)),
             angle_x: this.angle_x,
             player: this,
         });
@@ -173,7 +174,7 @@ for (let i = 0; i < 3; i++) {
     const wall = new Wall({
         pos:{
             x: Math.random() * FIELD_WIDTH,
-            y: Math.random() * FIELD_HEIGHT
+            z: Math.random() * FIELD_HEIGHT
         },
         width: 200,
         height: 50,
