@@ -91,7 +91,7 @@ document.addEventListener("pointerlockerror", () => {
 canvas2d.addEventListener("click", () => {
     if (isPlaying)
         if (isPointerLocked) {
-
+            // TODO クリック時の処理を実装
         }
         else {
             canvas2d.requestPointerLock();
@@ -181,6 +181,7 @@ socket.on('state', (players, bullets, walls) => {
 
     // Players
     Object.values(players).forEach((player) => {
+        // /** @type {{a:number}}*/let player=player_;
         let playerMesh = Meshes[player.id];
         if (!playerMesh) {
             console.log('create player mesh');
@@ -190,13 +191,13 @@ socket.on('state', (players, bullets, walls) => {
             scene.add(playerMesh);
         }
         playerMesh.used = true;
-        playerMesh.position.set(player.pos.x + player.width / 2, player.width / 2, player.pos.z + player.height / 2);
+        playerMesh.position.set(player.pos.x + player.size.x / 2, player.size.x / 2, player.pos.z + player.size.z / 2);
         playerMesh.rotation.y = - player.angle_x;
         playerMesh.rotation.z = player.angle_y;
 
         if (!playerMesh.getObjectByName('body')) {
             console.log('create body mesh');
-            mesh = new THREE.Mesh(new THREE.BoxGeometry(player.width, player.width, player.height), playerMaterial);
+            mesh = new THREE.Mesh(new THREE.BoxGeometry(player.size.x, player.size.x, player.size.z), playerMaterial);
             mesh.castShadow = true;
             mesh.name = 'body';
             playerMesh.add(mesh);
@@ -245,9 +246,9 @@ socket.on('state', (players, bullets, walls) => {
             // Your player
             const tmp = 150 * !isFPS
             camera.position.set(
-                player.pos.x + player.width / 2 - tmp * Math.cos(player.angle_x) * Math.cos(player.angle_y),
-                player.width / 2 - tmp * Math.sin(player.angle_y),
-                player.pos.z + player.height / 2 - tmp * Math.sin(player.angle_x) * Math.cos(player.angle_y)
+                player.pos.x + player.size.x / 2 - tmp * Math.cos(player.angle_x) * Math.cos(player.angle_y),
+                player.size.x / 2 - tmp * Math.sin(player.angle_y),
+                player.pos.z + player.size.z / 2 - tmp * Math.sin(player.angle_x) * Math.cos(player.angle_y)
             );
             camera.rotation.set(0, - player.angle_x - Math.PI / 2, 0);
             camera.updateMatrix();
@@ -265,28 +266,28 @@ socket.on('state', (players, bullets, walls) => {
     Object.values(bullets).forEach((bullet) => {
         let mesh = Meshes[bullet.id];
         if (!mesh) {
-            mesh = new THREE.Mesh(new THREE.BoxGeometry(bullet.width, bullet.width, bullet.height), bulletMaterial);
+            mesh = new THREE.Mesh(new THREE.BoxGeometry(bullet.size.x, bullet.size.x, bullet.size.z), bulletMaterial);
             mesh.castShadow = true;
             Meshes[bullet.id] = mesh;
             // Meshes.push(mesh);
             scene.add(mesh);
         }
         mesh.used = true;
-        mesh.position.set(bullet.pos.x + bullet.width / 2, 80, bullet.pos.z + bullet.height / 2);
+        mesh.position.set(bullet.pos.x + bullet.size.x / 2, 80, bullet.pos.z + bullet.size.z / 2);
     });
 
     // Walls
     Object.values(walls).forEach((wall) => {
         let mesh = Meshes[wall.id];
         if (!mesh) {
-            mesh = new THREE.Mesh(new THREE.BoxGeometry(wall.width, 100, wall.height), wallMaterial);
+            mesh = new THREE.Mesh(new THREE.BoxGeometry(wall.size.x, 100, wall.size.z), wallMaterial);
             mesh.castShadow = true;
             Meshes.push(mesh);
             Meshes[wall.id] = mesh;
             scene.add(mesh);
         }
         mesh.used = true;
-        mesh.position.set(wall.pos.x + wall.width / 2, 50, wall.pos.z + wall.height / 2);
+        mesh.position.set(wall.pos.x + wall.size.x / 2, 50, wall.pos.z + wall.size.z / 2);
     });
 
     // Clear unused Meshes

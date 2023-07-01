@@ -19,7 +19,7 @@ const { Vector3 }=THREE;
  */
 const clamp = (val, min, max) => Math.min(max, Math.max(min, val))
 
-const FIELD_WIDTH = 1000, FIELD_HEIGHT = 1000;
+const FIELD_SIZE = 1000;
 class GameObject {
     /**
      * 
@@ -30,19 +30,24 @@ class GameObject {
          * @type {number}
          */
         this.id = Math.floor(Math.random() * 1000000000);
-        obj.pos||={}
+        obj.pos||=new Vector3()
         /**
          * @type {THREE.Vector3}
          */
-        this.pos=new Vector3(obj.pos.x,obj.pos.y,obj.pos.z);
+        this.pos=obj.pos;
+        obj.size||=new Vector3()
+        /**
+         * @type {THREE.Vector3}
+         */
+        this.size=new Vector3(obj.size.x,obj.size.y,obj.size.z);
         /**
          * @type {number}
          */
-        this.width = obj.width;
+        this.size.x = obj.size.x;
         /**
          * @type {number}
          */
-        this.height = obj.height;
+        this.size.z = obj.size.z;
         /**
          * @type {number}
          */
@@ -61,7 +66,7 @@ class GameObject {
         this.pos.z += distance_y * Math.cos(this.angle_x);
 
         let collision = false;
-        if (this.pos.x < 0 || this.pos.x + this.width >= FIELD_WIDTH || this.pos.z < 0 || this.pos.z + this.height >= FIELD_HEIGHT) {
+        if (this.pos.x < 0 || this.pos.x + this.size.x >= FIELD_SIZE || this.pos.z < 0 || this.pos.z + this.size.z >= FIELD_SIZE) {
             collision = true;
         }
         if (this.intersectWalls()) {
@@ -73,16 +78,16 @@ class GameObject {
         return !collision;
     }
     intersect(obj) {
-        return (this.pos.x <= obj.pos.x + obj.width) &&
-            (this.pos.x + this.width >= obj.pos.x) &&
-            (this.pos.z <= obj.pos.z + obj.height) &&
-            (this.pos.z + this.height >= obj.pos.z);
+        return (this.pos.x <= obj.pos.x + obj.size.x) &&
+            (this.pos.x + this.size.x >= obj.pos.x) &&
+            (this.pos.z <= obj.pos.z + obj.size.z) &&
+            (this.pos.z + this.size.z >= obj.pos.z);
     }
     intersectWalls() {
         return Object.values(walls).some((wall) => this.intersect(wall));
     }
     toJSON() {
-        return { id: this.id, pos: this.pos, width: this.width, height: this.height, angle_x: this.angle_x, angle_y: this.angle_y };
+        return { id: this.id, pos: this.pos, size: this.size, angle_x: this.angle_x, angle_y: this.angle_y };
     }
 }
 class Player extends GameObject {
@@ -90,16 +95,15 @@ class Player extends GameObject {
         super(obj);
         this.socketId = obj.socketId;
         this.nickname = obj.nickname;
-        this.width = 80;
-        this.height = 80;
+        this.size.x = this.size.z = 80;
         this.health = this.maxHealth = 10;
         this.bullets = {};
         this.point = 0;
         this.movement = {};
         this.angle_y = 0;
         do {
-            this.pos.x = Math.random() * (FIELD_WIDTH - this.width);
-            this.pos.z = Math.random() * (FIELD_HEIGHT - this.height);
+            this.pos.x = Math.random() * (FIELD_SIZE - this.size.x);
+            this.pos.z = Math.random() * (FIELD_SIZE - this.size.z);
             this.angle_x = Math.random() * 2 * Math.PI;
         } while (this.intersectWalls());
     }
@@ -108,11 +112,11 @@ class Player extends GameObject {
             return;
         }
         const bullet = new Bullet({
-            pos:this.pos.clone().add(new Vector3(this.width / 2,this.height / 2)),
+            pos:this.pos.clone().add(new Vector3(this.size.x / 2,this.size.z / 2)),
             angle_x: this.angle_x,
             player: this,
         });
-        bullet.move(this.width / 2);
+        bullet.move(this.size.x / 2);
         this.bullets[bullet.id] = bullet;
         bullets[bullet.id] = bullet;
     }
@@ -133,8 +137,7 @@ class Player extends GameObject {
 class Bullet extends GameObject {
     constructor(obj) {
         super(obj);
-        this.width = 15;
-        this.height = 15;
+        this.size.x = this.size.z = 15;
         this.player = obj.player;
     }
     remove() {
@@ -172,12 +175,8 @@ let walls = {};
 
 for (let i = 0; i < 3; i++) {
     const wall = new Wall({
-        pos:{
-            x: Math.random() * FIELD_WIDTH,
-            z: Math.random() * FIELD_HEIGHT
-        },
-        width: 200,
-        height: 50,
+        pos: new Vector3(Math.random() * FIELD_SIZE,0,Math.random() * FIELD_SIZE),
+        size: new Vector3(200,0,50),
     });
     walls[wall.id] = wall;
 }
