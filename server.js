@@ -8,6 +8,8 @@ const app = express();
 const server = http.Server(app);
 const io = socketIO(server);
 const yargs = require('yargs').argv;
+const THREE = require("three");
+const { Vector3 }=THREE;
 /**
  * 
  * @param {number} val value
@@ -19,49 +21,69 @@ const clamp = (val, min, max) => Math.min(max, Math.max(min, val))
 
 const FIELD_WIDTH = 1000, FIELD_HEIGHT = 1000;
 class GameObject {
+    /**
+     * 
+     * @param {Partial<ReturnType<GameObject["toJSON"]>>} obj 
+     */
     constructor(obj = {}) {
+        /**
+         * @type {number}
+         */
         this.id = Math.floor(Math.random() * 1000000000);
-        this.x = obj.x;
-        this.y = obj.y;
+        /**
+         * @type {THREE.Vector3}
+         */
+        this.pos=new Vector3(obj.pos.x,obj.pos.y,obj.z||0);
+        /**
+         * @type {number}
+         */
         this.width = obj.width;
+        /**
+         * @type {number}
+         */
         this.height = obj.height;
+        /**
+         * @type {number}
+         */
         this.angle_x = obj.angle_x;
+        /**
+         * @type {number}
+         */
         this.angle_y = obj.angle_y;
     }
     move(distance_x, distance_y = 0) {
-        const oldX = this.x, oldY = this.y;
+        const old_pos=this.pos.copy();
 
-        this.x += distance_x * Math.cos(this.angle_x);
-        this.y += distance_x * Math.sin(this.angle_x);
-        this.x -= distance_y * Math.sin(this.angle_x);
-        this.y += distance_y * Math.cos(this.angle_x);
+        this.pos.x += distance_x * Math.cos(this.angle_x);
+        this.pos.y += distance_x * Math.sin(this.angle_x);
+        this.pos.x -= distance_y * Math.sin(this.angle_x);
+        this.pos.y += distance_y * Math.cos(this.angle_x);
 
         let collision = false;
-        if (this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT) {
+        if (this.pos.x < 0 || this.pos.x + this.width >= FIELD_WIDTH || this.pos.y < 0 || this.pos.y + this.height >= FIELD_HEIGHT) {
             collision = true;
         }
         if (this.intersectWalls()) {
             collision = true;
         }
         if (collision) {
-            this.x = oldX; this.y = oldY;
+            this.pos.x = oldX; this.pos.y = oldY;
         }
         return !collision;
     }
     intersect(obj) {
-        return (this.x <= obj.x + obj.width) &&
-            (this.x + this.width >= obj.x) &&
-            (this.y <= obj.y + obj.height) &&
-            (this.y + this.height >= obj.y);
+        return (this.pos.x <= obj.pos.x + obj.width) &&
+            (this.pos.x + this.width >= obj.pos.x) &&
+            (this.pos.y <= obj.pos.y + obj.height) &&
+            (this.pos.y + this.height >= obj.pos.y);
     }
     intersectWalls() {
         return Object.values(walls).some((wall) => this.intersect(wall));
     }
     toJSON() {
-        return { id: this.id, x: this.x, y: this.y, width: this.width, height: this.height, angle_x: this.angle_x, angle_y: this.angle_y };
+        return { id: this.id, pos: this.pos.toJSON(), width: this.width, height: this.height, angle_x: this.angle_x, angle_y: this.angle_y };
     }
 }
-
 class Player extends GameObject {
     constructor(obj = {}) {
         super(obj);
@@ -75,8 +97,8 @@ class Player extends GameObject {
         this.movement = {};
         this.angle_y = 0;
         do {
-            this.x = Math.random() * (FIELD_WIDTH - this.width);
-            this.y = Math.random() * (FIELD_HEIGHT - this.height);
+            this.pos.x = Math.random() * (FIELD_WIDTH - this.width);
+            this.pos.y = Math.random() * (FIELD_HEIGHT - this.height);
             this.angle_x = Math.random() * 2 * Math.PI;
         } while (this.intersectWalls());
     }
@@ -85,8 +107,7 @@ class Player extends GameObject {
             return;
         }
         const bullet = new Bullet({
-            x: this.x + this.width / 2,
-            y: this.y + this.height / 2,
+            pos:this.pos.copy().add(new Vector3(this.width / 2,this.height / 2)),
             angle_x: this.angle_x,
             player: this,
         });
@@ -150,8 +171,10 @@ let walls = {};
 
 for (let i = 0; i < 3; i++) {
     const wall = new Wall({
-        x: Math.random() * FIELD_WIDTH,
-        y: Math.random() * FIELD_HEIGHT,
+        pos:{
+            x: Math.random() * FIELD_WIDTH,
+            y: Math.random() * FIELD_HEIGHT
+        },
         width: 200,
         height: 50,
     });
