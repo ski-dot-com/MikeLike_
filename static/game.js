@@ -143,6 +143,9 @@ let movement = {
     document.addEventListener("keydown", tmp)
     document.addEventListener("keyup", tmp)
 }
+/**
+ * @type {Map<number, Touch>}
+ */
 const touches = {};
 $('#canvas-2d').on('touchstart', (event) => {
     socket.emit('shoot');
@@ -157,6 +160,9 @@ $('#canvas-2d').on('touchmove', (event) => {
     movement.right = false;
     movement.left = false;
     Array.from(event.touches).forEach((touch) => {
+        /**
+         * @type {Touch}
+         */
         const startTouch = touches[touch.identifier];
         movement.right |= touch.pageX - startTouch.pageX > 30;
         movement.left |= touch.pageX - startTouch.pageX < -30;
@@ -191,13 +197,13 @@ socket.on('state', (players, bullets, walls) => {
             scene.add(playerMesh);
         }
         playerMesh.used = true;
-        playerMesh.position.set(player.pos.x + player.size.x / 2, player.size.x / 2, player.pos.z + player.size.z / 2);
+        playerMesh.position.set(player.pos.x + player.size.x / 2, player.pos.y + player.size.y / 2, player.pos.z + player.size.z / 2);
         playerMesh.rotation.y = - player.angle_x;
         playerMesh.rotation.z = player.angle_y;
 
         if (!playerMesh.getObjectByName('body')) {
             console.log('create body mesh');
-            mesh = new THREE.Mesh(new THREE.BoxGeometry(player.size.x, player.size.x, player.size.z), playerMaterial);
+            mesh = new THREE.Mesh(new THREE.BoxGeometry(player.size.x, player.size.y, player.size.z), playerMaterial);
             mesh.castShadow = true;
             mesh.name = 'body';
             playerMesh.add(mesh);
@@ -214,7 +220,7 @@ socket.on('state', (players, bullets, walls) => {
                 mesh.name = 'nickname';
                 playerMesh.add(mesh);
 
-                mesh.position.set(0, 70, 0);
+                mesh.position.set(0, player.pos.y + player.size.y/2 + 30, 0);
                 mesh.rotation.y = Math.PI / 2;
             }
             {
@@ -236,7 +242,7 @@ socket.on('state', (players, bullets, walls) => {
                     mesh.health = player.health;
                     playerMesh.add(mesh);
                 }
-                mesh.position.set(0, 50, 0);
+                mesh.position.set(0, player.pos.y + player.size.y/2 + 10, 0);
                 mesh.rotation.y = Math.PI / 2;
             }
         }
@@ -266,28 +272,28 @@ socket.on('state', (players, bullets, walls) => {
     Object.values(bullets).forEach((bullet) => {
         let mesh = Meshes[bullet.id];
         if (!mesh) {
-            mesh = new THREE.Mesh(new THREE.BoxGeometry(bullet.size.x, bullet.size.x, bullet.size.z), bulletMaterial);
+            mesh = new THREE.Mesh(new THREE.BoxGeometry(bullet.size.x, bullet.size.y, bullet.size.z), bulletMaterial);
             mesh.castShadow = true;
             Meshes[bullet.id] = mesh;
             // Meshes.push(mesh);
             scene.add(mesh);
         }
         mesh.used = true;
-        mesh.position.set(bullet.pos.x + bullet.size.x / 2, 80, bullet.pos.z + bullet.size.z / 2);
+        mesh.position.set(bullet.pos.x + bullet.size.x / 2, bullet.pos.y, bullet.pos.z + bullet.size.z / 2);
     });
 
     // Walls
     Object.values(walls).forEach((wall) => {
         let mesh = Meshes[wall.id];
         if (!mesh) {
-            mesh = new THREE.Mesh(new THREE.BoxGeometry(wall.size.x, 100, wall.size.z), wallMaterial);
+            mesh = new THREE.Mesh(new THREE.BoxGeometry(wall.size.x, wall.size.y, wall.size.z), wallMaterial);
             mesh.castShadow = true;
             Meshes.push(mesh);
             Meshes[wall.id] = mesh;
             scene.add(mesh);
         }
         mesh.used = true;
-        mesh.position.set(wall.pos.x + wall.size.x / 2, 50, wall.pos.z + wall.size.z / 2);
+        mesh.position.set(wall.pos.x + wall.size.x / 2, wall.pos.y + wall.size.y/2, wall.pos.z + wall.size.z / 2);
     });
 
     // Clear unused Meshes

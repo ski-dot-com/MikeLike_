@@ -20,6 +20,7 @@ const { Vector3 }=THREE;
 const clamp = (val, min, max) => Math.min(max, Math.max(min, val))
 
 const FIELD_SIZE = 1000;
+const Vec_1=new Vector3(1,1,1);
 class GameObject {
     /**
      * 
@@ -80,6 +81,8 @@ class GameObject {
     intersect(obj) {
         return (this.pos.x <= obj.pos.x + obj.size.x) &&
             (this.pos.x + this.size.x >= obj.pos.x) &&
+            (this.pos.y <= obj.pos.y + obj.size.y) &&
+            (this.pos.y + this.size.y >= obj.pos.y) &&
             (this.pos.z <= obj.pos.z + obj.size.z) &&
             (this.pos.z + this.size.z >= obj.pos.z);
     }
@@ -95,7 +98,7 @@ class Player extends GameObject {
         super(obj);
         this.socketId = obj.socketId;
         this.nickname = obj.nickname;
-        this.size.x = this.size.z = 80;
+        this.size.x = this.size.y = this.size.z = 80;
         this.health = this.maxHealth = 10;
         this.bullets = {};
         this.point = 0;
@@ -112,7 +115,7 @@ class Player extends GameObject {
             return;
         }
         const bullet = new Bullet({
-            pos:this.pos.clone().add(new Vector3(this.size.x / 2,this.size.z / 2)),
+            pos:this.pos.clone().add(new Vector3(this.size.x / 2, 40, this.size.z / 2)),
             angle_x: this.angle_x,
             player: this,
         });
@@ -137,7 +140,7 @@ class Player extends GameObject {
 class Bullet extends GameObject {
     constructor(obj) {
         super(obj);
-        this.size.x = this.size.z = 15;
+        this.size=Vec_1.clone().multiplyScalar(15);
         this.player = obj.player;
     }
     remove() {
@@ -176,7 +179,7 @@ let walls = {};
 for (let i = 0; i < 3; i++) {
     const wall = new Wall({
         pos: new Vector3(Math.random() * FIELD_SIZE,0,Math.random() * FIELD_SIZE),
-        size: new Vector3(200,0,50),
+        size: new Vector3(200,100,50),
     });
     walls[wall.id] = wall;
 }
