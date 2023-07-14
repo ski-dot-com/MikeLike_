@@ -272,7 +272,7 @@ socket.on('state', (players, bullets, walls) => {
                 if (!mesh) {
                     console.log('create health mesh');
                     mesh = new THREE.Mesh(
-                        new THREE.TextGeometry('*'.repeat(player.health),
+                        new THREE.TextGeometry('*'.repeat(player.health).padEnd(10,"-"),
                             { font: font, size: 10, height: 1 }),
                         textMaterial,
                     );
@@ -301,8 +301,11 @@ socket.on('state', (players, bullets, walls) => {
             // Write to 2D canvas
             context.clearRect(0, 0, canvas2d.width, canvas2d.height);
             context.font = '30px Bold Arial';
-            context.fillText('You', 20, 0);
-            context.fillText(player.point + ' point', 20, 40);
+            context.fillText('You', 20, 40);
+            context.fillText(player.point + ' point', 100, 40);
+            context.font = '30px Bold Arial';
+            context.fillText('HP', 20, 80);
+            context.fillText('*'.repeat(player.health).padEnd(10,"-"), 100, 80);
         }
     });
 
