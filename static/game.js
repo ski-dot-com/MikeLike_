@@ -258,7 +258,7 @@ socket.on('state', (players, bullets, walls) => {
                 mesh.name = 'nickname';
                 playerMesh.add(mesh);
 
-                mesh.position.set(0, mid.y + 30, 0);
+                mesh.position.set(0, player.max.y + 30, 0);
                 mesh.rotation.y = Math.PI / 2;
             }
             {
@@ -280,7 +280,7 @@ socket.on('state', (players, bullets, walls) => {
                     mesh.health = player.health;
                     playerMesh.add(mesh);
                 }
-                mesh.position.set(0, mid.y + 10, 0);
+                mesh.position.set(0, player.max.y + 10, 0);
                 mesh.rotation.y = Math.PI / 2;
             }
         }
@@ -290,9 +290,9 @@ socket.on('state', (players, bullets, walls) => {
             // Your player
             const tmp = 150 * !isFPS
             camera.position.set(
-                mid.x / 2 - tmp * Math.cos(player.angle_x) * Math.cos(player.angle_y),
-                mid.y / 2 - tmp * Math.sin(player.angle_y),
-                mid.z / 2 - tmp * Math.sin(player.angle_x) * Math.cos(player.angle_y)
+                mid.x - tmp * Math.cos(player.angle_x) * Math.cos(player.angle_y),
+                mid.y - tmp * Math.sin(player.angle_y),
+                mid.z - tmp * Math.sin(player.angle_x) * Math.cos(player.angle_y)
             );
             camera.rotation.set(0, - player.angle_x - Math.PI / 2, 0);
             camera.updateMatrix();

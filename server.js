@@ -39,7 +39,7 @@ class GameObject {
         /**
          * @type {THREE.Vector3}
          */
-        this.min=obj.min?.clone()||new Vector3();
+        this.min=obj.min?.clone()||new Vector3(0,0,0);
         /**
          * @type {THREE.Vector3}
          */
@@ -154,7 +154,7 @@ class Player extends GameObject {
 class Bullet extends GameObject {
     constructor(obj) {
         super(obj);
-        this.min=-(this.max=Vec_1.clone().multiplyScalar(7.5));
+        this.min=(this.max=Vec_1.clone().multiplyScalar(7.5)).clone().negate();
         this.player = obj.player;
     }
     remove() {
