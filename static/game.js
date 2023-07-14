@@ -91,7 +91,7 @@ document.addEventListener("pointerlockerror", () => {
 canvas2d.addEventListener("click", () => {
     if (isPlaying)
         if (isPointerLocked) {
-
+            // TODO クリック時の処理を実装
         }
         else {
             canvas2d.requestPointerLock();
@@ -143,6 +143,9 @@ let movement = {
     document.addEventListener("keydown", tmp)
     document.addEventListener("keyup", tmp)
 }
+/**
+ * @type {Map<number, Touch>}
+ */
 const touches = {};
 $('#canvas-2d').on('touchstart', (event) => {
     socket.emit('shoot');
@@ -157,6 +160,9 @@ $('#canvas-2d').on('touchmove', (event) => {
     movement.right = false;
     movement.left = false;
     Array.from(event.touches).forEach((touch) => {
+        /**
+         * @type {Touch}
+         */
         const startTouch = touches[touch.identifier];
         movement.right |= touch.pageX - startTouch.pageX > 30;
         movement.left |= touch.pageX - startTouch.pageX < -30;
@@ -178,9 +184,33 @@ $('#canvas-2d').on('touchend', (event) => {
 const Meshes = [];
 socket.on('state', (players, bullets, walls) => {
     Object.values(Meshes).forEach((mesh) => { mesh.used = false; });
-
+    /**
+     * @typedef {{x:number,y:number,z:number}} Vector3Like
+     */
+    /**
+     * 
+     * @param {{pos:Vector3Like,min:Vector3Like,max:Vector3Like,size:Vector3Like,id:number}} param0 
+     * @param {THREE.Material} mat 
+     */
+    function drawHitBox({pos,min,max,size,id},mat) {
+        let mid = new THREE.Vector3(
+            (max.x+min.x)/2+pos.x,
+            (max.y+min.y)/2+pos.y,
+            (max.z+min.z)/2+pos.z
+            )
+        let mesh = Meshes[id];
+        if (!mesh) {
+            mesh = new THREE.Mesh(new THREE.BoxGeometry(size.x, size.y, size.z), mat);
+            mesh.castShadow = true;
+            Meshes[id] = mesh;
+            scene.add(mesh);
+        }
+        mesh.used = true;
+        mesh.position.set(mid.x, mid.y, mid.z);
+    }
     // Players
     Object.values(players).forEach((player) => {
+        // /** @type {{a:number}}*/let player=player_;
         let playerMesh = Meshes[player.id];
         if (!playerMesh) {
             console.log('create player mesh');
@@ -189,14 +219,29 @@ socket.on('state', (players, bullets, walls) => {
             Meshes[player.id] = playerMesh;
             scene.add(playerMesh);
         }
+        let mid = new THREE.Vector3(
+            (player.max.x+player.min.x)/2+player.pos.x,
+            (player.max.y+player.min.y)/2+player.pos.y,
+            (player.max.z+player.min.z)/2+player.pos.z
+            ),
+            min_pos = new THREE.Vector3(
+            player.min.x+player.pos.x,
+            player.min.y+player.pos.y,
+            player.min.z+player.pos.z
+            ),
+            max_pos = new THREE.Vector3(
+            player.max.x+player.pos.x,
+            player.max.y+player.pos.y,
+            player.max.z+player.pos.z
+            )
         playerMesh.used = true;
-        playerMesh.position.set(player.x + player.width / 2, player.width / 2, player.y + player.height / 2);
+        /**@type {THREE.Vector3}*/(playerMesh.position).copy(mid);
         playerMesh.rotation.y = - player.angle_x;
         playerMesh.rotation.z = player.angle_y;
 
         if (!playerMesh.getObjectByName('body')) {
             console.log('create body mesh');
-            mesh = new THREE.Mesh(new THREE.BoxGeometry(player.width, player.width, player.height), playerMaterial);
+            mesh = new THREE.Mesh(new THREE.BoxGeometry(player.size.x, player.size.y, player.size.z), playerMaterial);
             mesh.castShadow = true;
             mesh.name = 'body';
             playerMesh.add(mesh);
@@ -213,7 +258,7 @@ socket.on('state', (players, bullets, walls) => {
                 mesh.name = 'nickname';
                 playerMesh.add(mesh);
 
-                mesh.position.set(0, 70, 0);
+                mesh.position.set(0, player.max.y + 30, 0);
                 mesh.rotation.y = Math.PI / 2;
             }
             {
@@ -235,7 +280,7 @@ socket.on('state', (players, bullets, walls) => {
                     mesh.health = player.health;
                     playerMesh.add(mesh);
                 }
-                mesh.position.set(0, 50, 0);
+                mesh.position.set(0, player.max.y + 10, 0);
                 mesh.rotation.y = Math.PI / 2;
             }
         }
@@ -245,9 +290,9 @@ socket.on('state', (players, bullets, walls) => {
             // Your player
             const tmp = 150 * !isFPS
             camera.position.set(
-                player.x + player.width / 2 - tmp * Math.cos(player.angle_x) * Math.cos(player.angle_y),
-                player.width / 2 - tmp * Math.sin(player.angle_y),
-                player.y + player.height / 2 - tmp * Math.sin(player.angle_x) * Math.cos(player.angle_y)
+                mid.x - tmp * Math.cos(player.angle_x) * Math.cos(player.angle_y),
+                mid.y - tmp * Math.sin(player.angle_y),
+                mid.z - tmp * Math.sin(player.angle_x) * Math.cos(player.angle_y)
             );
             camera.rotation.set(0, - player.angle_x - Math.PI / 2, 0);
             camera.updateMatrix();
@@ -263,30 +308,12 @@ socket.on('state', (players, bullets, walls) => {
 
     // Bullets
     Object.values(bullets).forEach((bullet) => {
-        let mesh = Meshes[bullet.id];
-        if (!mesh) {
-            mesh = new THREE.Mesh(new THREE.BoxGeometry(bullet.width, bullet.width, bullet.height), bulletMaterial);
-            mesh.castShadow = true;
-            Meshes[bullet.id] = mesh;
-            // Meshes.push(mesh);
-            scene.add(mesh);
-        }
-        mesh.used = true;
-        mesh.position.set(bullet.x + bullet.width / 2, 80, bullet.y + bullet.height / 2);
+        drawHitBox(bullet,bulletMaterial)
     });
 
     // Walls
     Object.values(walls).forEach((wall) => {
-        let mesh = Meshes[wall.id];
-        if (!mesh) {
-            mesh = new THREE.Mesh(new THREE.BoxGeometry(wall.width, 100, wall.height), wallMaterial);
-            mesh.castShadow = true;
-            Meshes.push(mesh);
-            Meshes[wall.id] = mesh;
-            scene.add(mesh);
-        }
-        mesh.used = true;
-        mesh.position.set(wall.x + wall.width / 2, 50, wall.y + wall.height / 2);
+        drawHitBox(wall,wallMaterial)
     });
 
     // Clear unused Meshes

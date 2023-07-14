@@ -2,81 +2,125 @@
 
 const express = require('express');
 const http = require('http');
+const { type } = require('os');
 const path = require('path');
 const socketIO = require('socket.io');
 const app = express();
 const server = http.Server(app);
 const io = socketIO(server);
 const yargs = require('yargs').argv;
+const THREE = require("three");
+const { Vector3 }=THREE;
 /**
  * 
  * @param {number} val value
  * @param {number} min minimum
  * @param {number} max maximum
- * @returns 
  */
 const clamp = (val, min, max) => Math.min(max, Math.max(min, val))
 
-const FIELD_WIDTH = 1000, FIELD_HEIGHT = 1000;
+const FIELD_SIZE = 1000;
+const Vec_1=new Vector3(1,1,1);
 class GameObject {
+    /**
+     * 
+     * @param {Partial<ReturnType<GameObject["toJSON"]>>} obj 
+     */
     constructor(obj = {}) {
+        /**
+         * @type {number}
+         */
         this.id = Math.floor(Math.random() * 1000000000);
-        this.x = obj.x;
-        this.y = obj.y;
-        this.width = obj.width;
-        this.height = obj.height;
+        obj.pos=obj.pos||new Vector3();
+        /**
+         * @type {THREE.Vector3}
+         */
+        this.pos=obj.pos;
+        /**
+         * @type {THREE.Vector3}
+         */
+        this.min=obj.min?.clone()||new Vector3(0,0,0);
+        /**
+         * @type {THREE.Vector3}
+         */
+        this.max=obj.max?.clone()||Vec_1.clone();
+        /**
+         * @type {number}
+         */
         this.angle_x = obj.angle_x;
+        /**
+         * @type {number}
+         */
         this.angle_y = obj.angle_y;
     }
+    /**
+     * @type {THREE.Vector3}
+     */
+    get size(){
+        return new Vector3().subVectors(this.max,this.min);
+    }
+    /**
+     * @type {THREE.Vector3}
+     */
+    get min_pos(){
+        return new Vector3().addVectors(this.pos,this.min);
+    }
+    /**
+     * @type {THREE.Vector3}
+     */
+    get max_pos(){
+        return new Vector3().addVectors(this.pos,this.max);
+    }
     move(distance_x, distance_y = 0) {
-        const oldX = this.x, oldY = this.y;
+        const old_pos=this.pos.clone();
 
-        this.x += distance_x * Math.cos(this.angle_x);
-        this.y += distance_x * Math.sin(this.angle_x);
-        this.x -= distance_y * Math.sin(this.angle_x);
-        this.y += distance_y * Math.cos(this.angle_x);
+        this.pos.x += distance_x * Math.cos(this.angle_x);
+        this.pos.z += distance_x * Math.sin(this.angle_x);
+        this.pos.x -= distance_y * Math.sin(this.angle_x);
+        this.pos.z += distance_y * Math.cos(this.angle_x);
 
         let collision = false;
-        if (this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT) {
+        if (this.min_pos.x < 0 || this.max_pos.x >= FIELD_SIZE || this.min_pos.z < 0 || this.max_pos.z >= FIELD_SIZE) {
             collision = true;
         }
         if (this.intersectWalls()) {
             collision = true;
         }
         if (collision) {
-            this.x = oldX; this.y = oldY;
+            this.pos.x = old_pos.x; this.pos.z = old_pos.z;
         }
         return !collision;
     }
+    /**
+     * 
+     * @param {GameObject} obj 接触を判定するオブジェクト
+     * @returns これらのオブジェクトが接触しているかどうか
+     */
     intersect(obj) {
-        return (this.x <= obj.x + obj.width) &&
-            (this.x + this.width >= obj.x) &&
-            (this.y <= obj.y + obj.height) &&
-            (this.y + this.height >= obj.y);
+        return  [...obj.max_pos.sub(this.min_pos).toArray(),...this.max_pos.sub(obj.min_pos).toArray()].every(v=>v>=0);
     }
     intersectWalls() {
         return Object.values(walls).some((wall) => this.intersect(wall));
     }
     toJSON() {
-        return { id: this.id, x: this.x, y: this.y, width: this.width, height: this.height, angle_x: this.angle_x, angle_y: this.angle_y };
+        return { id: this.id, pos: this.pos, size: this.size, min: this.min, max: this.max, angle_x: this.angle_x, angle_y: this.angle_y };
     }
 }
-
 class Player extends GameObject {
     constructor(obj = {}) {
         super(obj);
         this.socketId = obj.socketId;
         this.nickname = obj.nickname;
-        this.width = 80;
-        this.height = 80;
+        this.min.x = this.min.z = -(this.max.x = this.max.z = 40);
+        this.max.y = 80;
         this.health = this.maxHealth = 10;
         this.bullets = {};
         this.point = 0;
         this.movement = {};
         this.angle_y = 0;
         do {
-            this.x = Math.random() * (FIELD_WIDTH - this.width);
-            this.y = Math.random() * (FIELD_HEIGHT - this.height);
+            this.pos.x = Math.random() * (FIELD_SIZE - this.size.x) + this.min.x;
+            this.pos.z = Math.random() * (FIELD_SIZE - this.size.z) + this.min.z;
             this.angle_x = Math.random() * 2 * Math.PI;
         } while (this.intersectWalls());
     }
@@ -85,12 +129,11 @@ class Player extends GameObject {
             return;
         }
         const bullet = new Bullet({
-            x: this.x + this.width / 2,
-            y: this.y + this.height / 2,
+            pos:this.pos.clone().add(new Vector3(0,40)),
             angle_x: this.angle_x,
             player: this,
         });
-        bullet.move(this.width / 2);
+        bullet.move(this.max.x / 2);
         this.bullets[bullet.id] = bullet;
         bullets[bullet.id] = bullet;
     }
@@ -111,8 +154,7 @@ class Player extends GameObject {
 class Bullet extends GameObject {
     constructor(obj) {
         super(obj);
-        this.width = 15;
-        this.height = 15;
+        this.min=(this.max=Vec_1.clone().multiplyScalar(7.5)).clone().negate();
         this.player = obj.player;
     }
     remove() {
@@ -150,10 +192,8 @@ let walls = {};
 
 for (let i = 0; i < 3; i++) {
     const wall = new Wall({
-        x: Math.random() * FIELD_WIDTH,
-        y: Math.random() * FIELD_HEIGHT,
-        width: 200,
-        height: 50,
+        pos: new Vector3(Math.random() * FIELD_SIZE,0,Math.random() * FIELD_SIZE),
+        max: new Vector3(200,100,50),
     });
     walls[wall.id] = wall;
 }
