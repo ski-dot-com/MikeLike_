@@ -119,8 +119,8 @@ class Player extends GameObject {
         this.movement = {};
         this.angle_y = 0;
         do {
-            this.pos.x = Math.random() * (FIELD_SIZE - this.size.x) + this.min.x;
-            this.pos.z = Math.random() * (FIELD_SIZE - this.size.z) + this.min.z;
+            this.pos.x = Math.random() * (FIELD_SIZE - this.size.x) - this.min.x;
+            this.pos.z = Math.random() * (FIELD_SIZE - this.size.z) - this.min.z;
             this.angle_x = Math.random() * 2 * Math.PI;
         } while (this.intersectWalls());
     }
