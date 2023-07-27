@@ -21,14 +21,15 @@ const clamp = (val, min, max) => Math.min(max, Math.max(min, val))
 const FIELD_SIZE = 1000;
 const Vec_1=new Vector3(1,1,1);
 const Casters={}
-
-Casters.Ray=class{
+/**
+ * レイ。どこで当たるかを判定できる。
+ */
+Casters.Ray=class Ray{
 	/**
 	 * @type {THREE.Vector3}
 	 */
 	#direction
 	/**
-	 * レイ。どこで当たるかを判定できる。
 	 * @param {THREE.Vector3} start 
 	 * @param {THREE.Vector3} end 
 	 */
@@ -49,9 +50,10 @@ Casters.Ray=class{
 		 * @type {GameObject?}
 		 */
 		this.hit=null
+		console.log(this.#direction)
 	}
 	/**
-	 * 衝突判定をテストする。
+	 * 衝突をテストする。
 	 * @param  {...GameObject} objs 
 	 * @returns {this} this
 	 */
@@ -60,35 +62,60 @@ Casters.Ray=class{
 			do{
 				if(!this.#direction.x)break;
 				const scaler=(this.#direction.x>0?obj.min_pos.x:obj.max_pos.x-this.start.x)/this.#direction.x;
+				if(obj instanceof Player)console.log(`${obj.nickname}.x.scaler: ${scaler}`)
 				if(scaler<0)break;
 				const end_cand=this.#direction.clone().multiplyScalar(this.#direction).add(this.start);
 				if(!(obj.min_pos.y<=end_cand.y&&end_cand.y<=obj.max_pos.y&&obj.min_pos.z<=end_cand.z&&end_cand.z<=obj.max_pos.z))break;
 				this.end=end_cand;
 				hit=obj;
+				if(obj instanceof Player)console.log(`${obj.nickname}.x.hit`)
 				continue main_loop;
 			}while(0);
 			do{
 				if(!this.#direction.y)break;
 				const scaler=(this.#direction.y>0?obj.min_pos.y:obj.max_pos.y-this.start.y)/this.#direction.y;
+				if(obj instanceof Player)console.log(`${obj.nickname}.y.scaler: ${scaler}`)
 				if(scaler<0)break;
 				const end_cand=this.#direction.clone().multiplyScalar(this.#direction).add(this.start);
 				if(!(obj.min_pos.z<=end_cand.z&&end_cand.z<=obj.max_pos.z&&obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x))break;
 				this.end=end_cand;
 				hit=obj;
+				if(obj instanceof Player)console.log(`${obj.nickname}.y.hit`)
 				continue main_loop;
 			}while(0);
 			do{
 				if(!this.#direction.z)break;
 				const scaler=(this.#direction.z>0?obj.min_pos.z:obj.max_pos.z-this.start.z)/this.#direction.z;
+				if(obj instanceof Player)console.log(`${obj.nickname}.z.scaler: ${scaler}`)
 				if(scaler<0)break;
 				const end_cand=this.#direction.clone().multiplyScalar(this.#direction).add(this.start);
 				if(!(obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x&&obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x))break;
 				this.end=end_cand;
 				hit=obj;
+				if(obj instanceof Player)console.log(`${obj.nickname}.z.hit`)
 				continue main_loop;
 			}while(0);
 		}
 		return this
+	}
+}
+/**
+ * ボックス(ボックスキャスト用)。
+ */
+Casters.Box=class Box{
+	/**
+	 * @type {Casters.Ray}
+	 */
+	#ray
+	/**
+	 * 
+	 * @param {THREE.Vector3} start 
+	 * @param {THREE.Vector3} end 
+	 * @param {THREE.Vector3} min 
+	 * @param {THREE.Vector3} max 
+	 */
+	constructor(start,end,min,max){
+		this.#ray=new Casters.Ray(start,end)
 	}
 }
 class GameObject {
@@ -207,6 +234,13 @@ class Player extends GameObject {
 		this.bullets[bullet.id] = bullet;
 		bullets[bullet.id] = bullet;
 	}
+	ray(){
+		console.log("ray")
+		const hit=new Casters.Ray(this.pos,new Vector3(1000 * Math.cos(this.angle_x) * Math.cos(this.angle_y),1000 * Math.sin(this.angle_y),1000 * Math.sin(this.angle_x) * Math.cos(this.angle_y)).add(this.pos)).test(...Object.values(players),...Object.values(walls)).hit
+		if(hit instanceof Player){
+			hit.damage()
+		}
+	}
 	damage() {
 		this.health--;
 		if (this.health === 0) {
@@ -300,6 +334,10 @@ io.on('connection', function (socket) {
 	socket.on('shoot', function () {
 		if (!player || player.health === 0) { return; }
 		player.shoot();
+	});
+	socket.on('ray', function () {
+		if (!player || player.health === 0) { return; }
+		player.ray();
 	});
 	socket.on('disconnect', () => {
 		if (!player) { return; }
