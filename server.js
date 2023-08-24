@@ -50,7 +50,7 @@ Casters.Ray=class Ray{
 		 * @type {GameObject?}
 		 */
 		this.hit=null
-		console.log(this.#direction)
+		// console.log(this.#direction)
 	}
 	/**
 	 * 衝突をテストする。
@@ -61,38 +61,41 @@ Casters.Ray=class Ray{
 		main_loop:for (const obj of objs) {
 			do{
 				if(!this.#direction.x)break;
-				const scaler=(this.#direction.x>0?obj.min_pos.x:obj.max_pos.x-this.start.x)/this.#direction.x;
-				if(obj instanceof Player)console.log(`${obj.nickname}.x.scaler: ${scaler}`)
+				const scaler=((this.#direction.x>0?obj.min_pos.x:obj.max_pos.x)-this.start.x)/this.#direction.x;
+				// if(obj instanceof Player)console.log(`${obj.nickname}.x.scaler: ${scaler}`)
 				if(scaler<0)break;
-				const end_cand=this.#direction.clone().multiplyScalar(this.#direction).add(this.start);
+				const end_cand=this.#direction.clone().multiplyScalar(scaler).add(this.start);
+				//if(obj instanceof Player)console.log(`(wall).x.end_cand:`, end_cand)
 				if(!(obj.min_pos.y<=end_cand.y&&end_cand.y<=obj.max_pos.y&&obj.min_pos.z<=end_cand.z&&end_cand.z<=obj.max_pos.z))break;
 				this.end=end_cand;
-				hit=obj;
-				if(obj instanceof Player)console.log(`${obj.nickname}.x.hit`)
+				this.hit=obj;
+				//if(obj instanceof Player)console.log(`(wall).x.hit`)
 				continue main_loop;
 			}while(0);
 			do{
 				if(!this.#direction.y)break;
-				const scaler=(this.#direction.y>0?obj.min_pos.y:obj.max_pos.y-this.start.y)/this.#direction.y;
-				if(obj instanceof Player)console.log(`${obj.nickname}.y.scaler: ${scaler}`)
+				const scaler=((this.#direction.y>0?obj.min_pos.y:obj.max_pos.y)-this.start.y)/this.#direction.y;
+				//if(obj instanceof Player)console.log(`${obj.nickname}.y.scaler: ${scaler}`)
 				if(scaler<0)break;
-				const end_cand=this.#direction.clone().multiplyScalar(this.#direction).add(this.start);
+				const end_cand=this.#direction.clone().multiplyScalar(scaler).add(this.start);
+				//if(obj instanceof Wall)console.log(`(wall).y.end_cand:`, end_cand)
 				if(!(obj.min_pos.z<=end_cand.z&&end_cand.z<=obj.max_pos.z&&obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x))break;
 				this.end=end_cand;
-				hit=obj;
-				if(obj instanceof Player)console.log(`${obj.nickname}.y.hit`)
+				this.hit=obj;
+				//if(obj instanceof Wall)console.log(`(wall).y.hit`)
 				continue main_loop;
 			}while(0);
 			do{
 				if(!this.#direction.z)break;
-				const scaler=(this.#direction.z>0?obj.min_pos.z:obj.max_pos.z-this.start.z)/this.#direction.z;
-				if(obj instanceof Player)console.log(`${obj.nickname}.z.scaler: ${scaler}`)
+				const scaler=((this.#direction.z>0?obj.min_pos.z:obj.max_pos.z)-this.start.z)/this.#direction.z;
+				//if(obj instanceof Player)console.log(`${obj.nickname}.z.scaler: ${scaler}`)
 				if(scaler<0)break;
-				const end_cand=this.#direction.clone().multiplyScalar(this.#direction).add(this.start);
+				const end_cand=this.#direction.clone().multiplyScalar(scaler).add(this.start);
+				//if(obj instanceof Player)console.log(`(wall).z.end_cand:`, end_cand)
 				if(!(obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x&&obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x))break;
 				this.end=end_cand;
-				hit=obj;
-				if(obj instanceof Player)console.log(`${obj.nickname}.z.hit`)
+				this.hit=obj;
+				//if(obj instanceof Player)console.log(`(wall).z.hit`)
 				continue main_loop;
 			}while(0);
 		}
@@ -235,10 +238,14 @@ class Player extends GameObject {
 		bullets[bullet.id] = bullet;
 	}
 	ray(){
-		console.log("ray")
-		const hit=new Casters.Ray(this.pos,new Vector3(1000 * Math.cos(this.angle_x) * Math.cos(this.angle_y),1000 * Math.sin(this.angle_y),1000 * Math.sin(this.angle_x) * Math.cos(this.angle_y)).add(this.pos)).test(...Object.values(players),...Object.values(walls)).hit
-		if(hit instanceof Player){
-			hit.damage()
+		// console.log("ray")
+		const eye=new Vector3(0,40,0).add(this.pos)
+		const hit=new Casters.Ray(eye,new Vector3(
+			 Math.cos(this.angle_x) /** Math.cos(this.angle_y)  */,
+								    /*  Math.sin(this.angle_y)//*/0
+			,Math.sin(this.angle_x) /** Math.cos(this.angle_y)  */).multiplyScalar(1000).add(eye)).test(...Object.values(players).filter(x=>x!==this),...Object.values(walls)).hit
+		if(hit instanceof Wall){
+			delete walls[hit.id];
 		}
 	}
 	damage() {
