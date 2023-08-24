@@ -66,7 +66,7 @@ Casters.Ray=class Ray{
 				if(!this.#direction.x)break;
 				const scaler=((this.#direction.x>0?obj.min_pos.x:obj.max_pos.x)-this.start.x)/this.#direction.x;
 				// if(obj instanceof Player)console.log(`${obj.nickname}.x.scaler: ${scaler}`)
-				if(scaler<0||scaler>length)break;
+				if(scaler<0||scaler>this.length)break;
 				const end_cand=this.#direction.clone().multiplyScalar(scaler).add(this.start);
 				//if(obj instanceof Player)console.log(`(wall).x.end_cand:`, end_cand)
 				if(!(obj.min_pos.y<=end_cand.y&&end_cand.y<=obj.max_pos.y&&obj.min_pos.z<=end_cand.z&&end_cand.z<=obj.max_pos.z))break;
@@ -80,7 +80,7 @@ Casters.Ray=class Ray{
 				if(!this.#direction.y)break;
 				const scaler=((this.#direction.y>0?obj.min_pos.y:obj.max_pos.y)-this.start.y)/this.#direction.y;
 				//if(obj instanceof Player)console.log(`${obj.nickname}.y.scaler: ${scaler}`)
-				if(scaler<0||scaler>length)break;
+				if(scaler<0||scaler>this.length)break;
 				const end_cand=this.#direction.clone().multiplyScalar(scaler).add(this.start);
 				//if(obj instanceof Wall)console.log(`(wall).y.end_cand:`, end_cand)
 				if(!(obj.min_pos.z<=end_cand.z&&end_cand.z<=obj.max_pos.z&&obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x))break;
@@ -94,7 +94,7 @@ Casters.Ray=class Ray{
 				if(!this.#direction.z)break;
 				const scaler=((this.#direction.z>0?obj.min_pos.z:obj.max_pos.z)-this.start.z)/this.#direction.z;
 				//if(obj instanceof Player)console.log(`${obj.nickname}.z.scaler: ${scaler}`)
-				if(scaler<0||scaler>length)break;
+				if(scaler<0||scaler>this.length)break;
 				const end_cand=this.#direction.clone().multiplyScalar(scaler).add(this.start);
 				//if(obj instanceof Player)console.log(`(wall).z.end_cand:`, end_cand)
 				if(!(obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x&&obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x))break;
@@ -152,7 +152,7 @@ Casters.Box=class Box{
 	 * @returns {this} this
 	 */
 	test(...objs){
-		this.#ray.test(objs.map(o=>new GameObject({
+		this.#ray.test(...objs.map(o=>new GameObject({
 			max:o.max.clone().sub(this.min),
 			min:o.min.clone().sub(this.max)
 		})))
@@ -211,8 +211,8 @@ class GameObject {
 	}
 	move(distance_x, distance_y = 0) {
 		const d=new Vector3(distance_x * Math.cos(this.angle_x)-distance_y * Math.sin(this.angle_x),0, distance_x * Math.sin(this.angle_x)+distance_y * Math.cos(this.angle_x)), 
-			to_pos=new Vector3.addVectors(this.pos, d),
-			bcast=new Casters.Box(this.pos, to_pos, this.min, this.max).test(...Object.values(walls), ...Object.values(players))
+			to_pos=new Vector3().addVectors(this.pos, d),
+			bcast=new Casters.Box(this.pos, to_pos, this.min, this.max).test(...Object.values(walls))
 		let tmp;
 		this.pos.add(d.clone().multiplyScalar(tmp=bcast.length/d.length()))
 		return !!tmp;
