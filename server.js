@@ -197,6 +197,20 @@ for (let i = 0; i < 3; i++) {
     });
     walls[wall.id] = wall;
 }
+for(let x = -200; x<=FIELD_SIZE+200;x+=FIELD_SIZE+200){
+	const wall = new Wall({
+		pos: new Vector3(x,0,0),
+		max: new Vector3(200,100,FIELD_SIZE),
+	});
+	walls[wall.id] = wall;
+}
+for(let z = -200; z<=FIELD_SIZE+200;z+=FIELD_SIZE+200){
+	const wall = new Wall({
+		pos: new Vector3(-200,0,z),
+		max: new Vector3(FIELD_SIZE+400,100,200),
+	});
+	walls[wall.id] = wall;
+}
 
 const bot = new BotPlayer({ nickname: 'bot' });
 players[bot.id] = bot;
