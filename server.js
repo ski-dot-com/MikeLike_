@@ -123,9 +123,10 @@ Casters.Ray=class Ray{
  * @returns {THREE.Vector3} 実際の終着点
  */
 function calc_route(start,end,...objs){
-	while (start.equals(end)){
+	while (!start.equals(end)){
 		let res = new Casters.Ray(start,end).test(...objs)
 		if(!res.axis)break;
+		console.log(res.axis)
 		start = res.end;
 		switch (res.axis) {
 			case "x":
@@ -257,9 +258,9 @@ class GameObject {
 	}
 	move(distance_x, distance_y = 0) {
 		const d=new Vector3(distance_x * Math.cos(this.angle_x)-distance_y * Math.sin(this.angle_x),0, distance_x * Math.sin(this.angle_x)+distance_y * Math.cos(this.angle_x)), 
-			to_pos=new Vector3().addVectors(this.pos, d),pos_old=this.pos.clone()
-		this.pos.set(new Casters.Box(this.pos, to_pos, this.min, this.max).test(...Object.values(walls)))
-		return pos_old.equals(this.pos);
+			to_pos=new Vector3().addVectors(this.pos, d)
+		this.pos.copy(new Casters.Box(this.pos, to_pos, this.min, this.max).route(...Object.values(walls)))
+		return to_pos.equals(this.pos);
 	}
 	/**
 	 * 
