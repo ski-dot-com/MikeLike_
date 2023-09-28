@@ -52,6 +52,10 @@ Casters.Ray=class Ray{
 		 * @type {GameObject?}
 		 */
 		this.hit=null
+		/**
+		 * @type {"x"|"y"|"z"?}
+		 */
+		this.axis=null
 		
 		// console.log(this.#direction)
 	}
@@ -66,13 +70,14 @@ Casters.Ray=class Ray{
 				if(!this.#direction.x)break;
 				const scaler=((this.#direction.x>0?obj.min_pos.x:obj.max_pos.x)-this.start.x)/this.#direction.x;
 				// if(obj instanceof Player)console.log(`${obj.nickname}.x.scaler: ${scaler}`)
-				if(scaler<0||scaler>this.length)break;
+				if(scaler<0||scaler>=this.length)break;
 				const end_cand=this.#direction.clone().multiplyScalar(scaler).add(this.start);
 				//if(obj instanceof Player)console.log(`(wall).x.end_cand:`, end_cand)
 				if(!(obj.min_pos.y<=end_cand.y&&end_cand.y<=obj.max_pos.y&&obj.min_pos.z<=end_cand.z&&end_cand.z<=obj.max_pos.z))break;
 				this.end=end_cand;
 				this.length=scaler;
 				this.hit=obj;
+				this.axis="x"
 				//if(obj instanceof Player)console.log(`(wall).x.hit`)
 				continue main_loop;
 			}while(0);
@@ -80,13 +85,14 @@ Casters.Ray=class Ray{
 				if(!this.#direction.y)break;
 				const scaler=((this.#direction.y>0?obj.min_pos.y:obj.max_pos.y)-this.start.y)/this.#direction.y;
 				//if(obj instanceof Player)console.log(`${obj.nickname}.y.scaler: ${scaler}`)
-				if(scaler<0||scaler>this.length)break;
+				if(scaler<0||scaler>=this.length)break;
 				const end_cand=this.#direction.clone().multiplyScalar(scaler).add(this.start);
 				//if(obj instanceof Wall)console.log(`(wall).y.end_cand:`, end_cand)
 				if(!(obj.min_pos.z<=end_cand.z&&end_cand.z<=obj.max_pos.z&&obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x))break;
 				this.end=end_cand;
 				this.length=scaler;
 				this.hit=obj;
+				this.axis="y"
 				//if(obj instanceof Wall)console.log(`(wall).y.hit`)
 				continue main_loop;
 			}while(0);
@@ -94,19 +100,46 @@ Casters.Ray=class Ray{
 				if(!this.#direction.z)break;
 				const scaler=((this.#direction.z>0?obj.min_pos.z:obj.max_pos.z)-this.start.z)/this.#direction.z;
 				//if(obj instanceof Player)console.log(`${obj.nickname}.z.scaler: ${scaler}`)
-				if(scaler<0||scaler>this.length)break;
+				if(scaler<0||scaler>=this.length)break;
 				const end_cand=this.#direction.clone().multiplyScalar(scaler).add(this.start);
 				//if(obj instanceof Player)console.log(`(wall).z.end_cand:`, end_cand)
 				if(!(obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x&&obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x))break;
 				this.end=end_cand;
 				this.length=scaler;
 				this.hit=obj;
+				this.axis="z"
 				//if(obj instanceof Player)console.log(`(wall).z.hit`)
 				continue main_loop;
 			}while(0);
 		}
 		return this
 	}
+}
+/**
+ * 衝突を考慮しながら、移動をする(点の移動)。
+ * @param   {THREE.Vector3} start 開始点
+ * @param   {THREE.Vector3} end 目的地
+ * @param   {...GameObject} objs 障害物
+ * @returns {THREE.Vector3} 実際の終着点
+ */
+function calc_route(start,end,...objs){
+	while (start.equals(end)){
+		let res = new Casters.Ray(start,end).test(...objs)
+		if(!res.axis)break;
+		start = res.end;
+		switch (res.axis) {
+			case "x":
+				end.x=start.x
+				break;
+			case "y":
+				end.y=start.y
+				break;
+			case "z":
+				end.z=start.z
+				break;
+		}
+	}
+	return end
 }
 /**
  * ボックス(ボックスキャスト用)。
@@ -154,9 +187,22 @@ Casters.Box=class Box{
 	test(...objs){
 		this.#ray.test(...objs.map(o=>new GameObject({
 			max:o.max.clone().sub(this.min),
-			min:o.min.clone().sub(this.max)
+			min:o.min.clone().sub(this.max),
+			pos:o.pos
 		})))
 		return this
+	}
+	/**
+	 * 衝突を考慮して移動する。
+	 * @param   {...GameObject} objs 
+	 * @returns {this} this
+	 */
+	route(...objs){
+		return calc_route(this.start,this.end,...objs.map(o=>new GameObject({
+			max:o.max.clone().sub(this.min),
+			min:o.min.clone().sub(this.max),
+			pos:o.pos
+		})))
 	}
 }
 class GameObject {
@@ -211,11 +257,9 @@ class GameObject {
 	}
 	move(distance_x, distance_y = 0) {
 		const d=new Vector3(distance_x * Math.cos(this.angle_x)-distance_y * Math.sin(this.angle_x),0, distance_x * Math.sin(this.angle_x)+distance_y * Math.cos(this.angle_x)), 
-			to_pos=new Vector3().addVectors(this.pos, d),
-			bcast=new Casters.Box(this.pos, to_pos, this.min, this.max).test(...Object.values(walls))
-		let tmp;
-		this.pos.add(d.clone().multiplyScalar(tmp=bcast.length/d.length()))
-		return !!tmp;
+			to_pos=new Vector3().addVectors(this.pos, d),pos_old=this.pos.clone()
+		this.pos.set(new Casters.Box(this.pos, to_pos, this.min, this.max).test(...Object.values(walls)))
+		return pos_old.equals(this.pos);
 	}
 	/**
 	 * 
