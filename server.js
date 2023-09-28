@@ -126,7 +126,6 @@ function calc_route(start,end,...objs){
 	while (!start.equals(end)){
 		let res = new Casters.Ray(start,end).test(...objs)
 		if(!res.axis)break;
-		console.log(res.axis)
 		start = res.end;
 		switch (res.axis) {
 			case "x":
