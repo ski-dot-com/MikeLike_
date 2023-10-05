@@ -5,7 +5,7 @@ const { Vector3 } = THREE;
 /**
  * レイ。どこで当たるかを判定できる。
  */
-exports.Ray=class Ray{
+class Ray{
 	/**
 	 * @type {THREE.Vector3}
 	 */
@@ -96,6 +96,7 @@ exports.Ray=class Ray{
 		return this
 	}
 }
+exports.Ray=Ray
 /**
  * 衝突を考慮しながら、移動をする(点の移動)。
  * @param   {THREE.Vector3} start 開始点
@@ -105,7 +106,7 @@ exports.Ray=class Ray{
  */
 function calc_route(start,end,...objs){
 	while (!start.equals(end)){
-		let res = new Casters.Ray(start,end).test(...objs)
+		let res = new Ray(start,end).test(...objs)
 		if(!res.axis)break;
 		start = res.end;
 		switch (res.axis) {
@@ -125,9 +126,9 @@ function calc_route(start,end,...objs){
 /**
  * ボックス(ボックスキャスト用)。
  */
-exports.Box=class Box{
+class Box{
 	/**
-	 * @type {exports.Ray}
+	 * @type {Ray}
 	 */
 	#ray
 	/**
@@ -138,7 +139,7 @@ exports.Box=class Box{
 	 * @param {THREE.Vector3} max 
 	 */
 	constructor(start,end,min,max){
-		this.#ray=new Casters.Ray(start,end)
+		this.#ray=new Ray(start,end)
 		/**
 		 * @type {THREE.Vector3}
 		 */
@@ -175,14 +176,14 @@ exports.Box=class Box{
 	}
 	/**
 	 * 衝突を考慮して移動する。
-	 * @param   {...GameObject} objs 
+	 * @param   {...{min:Vector3,max:Vector3,pos:Vector3}} objs 
 	 * @returns {this} this
 	 */
 	route(...objs){
-		return calc_route(this.start,this.end,...objs.map(o=>new GameObject({
-			max:o.max.clone().sub(this.min),
-			min:o.min.clone().sub(this.max),
-			pos:o.pos
+		return calc_route(this.start,this.end,...objs.map(o=>({
+			max_pos:o.max.clone().sub(this.min).add(o.pos),
+			min_pos:o.min.clone().sub(this.max).add(o.pos),
 		})))
 	}
 }
+exports.Box=Box
