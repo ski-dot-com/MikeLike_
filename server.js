@@ -42,8 +42,13 @@ class GameObject extends EventEmitter{
 			}
 		})
 	}
-	static emit(...args){
-		GameObject.#static_event.emit(...args)
+	/**
+	 * 
+	 * @param {string} name 
+	 * @param  {...any} args 
+	 */
+	static emit(name,...args){
+		GameObject.#static_event.emit(name,...args)
 	}
 	static get all(){
 		if(!everything.get(this))everything.set(this,{})
@@ -217,7 +222,7 @@ class BotPlayer extends Player {
 class Wall extends GameObject {
 }
 
-GameObject.#static_event.on("create")
+GameObject.on("create")
 /**
  * @type {Object<number,Player>}
  */
