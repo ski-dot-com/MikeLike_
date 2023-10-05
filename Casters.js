@@ -1,0 +1,188 @@
+'use strict';
+
+const THREE = require("three");
+const { Vector3 } = THREE;
+/**
+ * レイ。どこで当たるかを判定できる。
+ */
+exports.Ray=class Ray{
+	/**
+	 * @type {THREE.Vector3}
+	 */
+	#direction
+	/**
+	 * @param {THREE.Vector3} start 
+	 * @param {THREE.Vector3} end 
+	 */
+	constructor(start,end){
+		/**
+		 * @type {THREE.Vector3}
+		 */
+		this.start=start.clone()
+		/**
+		 * @type {THREE.Vector3}
+		 */
+		this.end=end.clone()
+		const tmp=new Vector3().subVectors(end,start)
+		this.length=tmp.length()
+		/**
+		 * @type {THREE.Vector3}
+		 */
+		this.#direction=tmp.normalize()
+		/**
+		 * @type {GameObject?}
+		 */
+		this.hit=null
+		/**
+		 * @type {"x"|"y"|"z"?}
+		 */
+		this.axis=null
+		
+		// console.log(this.#direction)
+	}
+	/**
+	 * 衝突をテストする。
+	 * @param  {...GameObject} objs 
+	 * @returns {this} this
+	 */
+	test(...objs){
+		main_loop:for (const obj of objs) {
+			do{
+				if(!this.#direction.x)break;
+				const scaler=((this.#direction.x>0?obj.min_pos.x:obj.max_pos.x)-this.start.x)/this.#direction.x;
+				// if(obj instanceof Player)console.log(`${obj.nickname}.x.scaler: ${scaler}`)
+				if(scaler<0||scaler>=this.length)break;
+				const end_cand=this.#direction.clone().multiplyScalar(scaler).add(this.start);
+				//if(obj instanceof Player)console.log(`(wall).x.end_cand:`, end_cand)
+				if(!(obj.min_pos.y<=end_cand.y&&end_cand.y<=obj.max_pos.y&&obj.min_pos.z<=end_cand.z&&end_cand.z<=obj.max_pos.z))break;
+				this.end=end_cand;
+				this.length=scaler;
+				this.hit=obj;
+				this.axis="x"
+				//if(obj instanceof Player)console.log(`(wall).x.hit`)
+				continue main_loop;
+			}while(0);
+			do{
+				if(!this.#direction.y)break;
+				const scaler=((this.#direction.y>0?obj.min_pos.y:obj.max_pos.y)-this.start.y)/this.#direction.y;
+				//if(obj instanceof Player)console.log(`${obj.nickname}.y.scaler: ${scaler}`)
+				if(scaler<0||scaler>=this.length)break;
+				const end_cand=this.#direction.clone().multiplyScalar(scaler).add(this.start);
+				//if(obj instanceof Wall)console.log(`(wall).y.end_cand:`, end_cand)
+				if(!(obj.min_pos.z<=end_cand.z&&end_cand.z<=obj.max_pos.z&&obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x))break;
+				this.end=end_cand;
+				this.length=scaler;
+				this.hit=obj;
+				this.axis="y"
+				//if(obj instanceof Wall)console.log(`(wall).y.hit`)
+				continue main_loop;
+			}while(0);
+			do{
+				if(!this.#direction.z)break;
+				const scaler=((this.#direction.z>0?obj.min_pos.z:obj.max_pos.z)-this.start.z)/this.#direction.z;
+				//if(obj instanceof Player)console.log(`${obj.nickname}.z.scaler: ${scaler}`)
+				if(scaler<0||scaler>=this.length)break;
+				const end_cand=this.#direction.clone().multiplyScalar(scaler).add(this.start);
+				//if(obj instanceof Player)console.log(`(wall).z.end_cand:`, end_cand)
+				if(!(obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x&&obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x))break;
+				this.end=end_cand;
+				this.length=scaler;
+				this.hit=obj;
+				this.axis="z"
+				//if(obj instanceof Player)console.log(`(wall).z.hit`)
+				continue main_loop;
+			}while(0);
+		}
+		return this
+	}
+}
+/**
+ * 衝突を考慮しながら、移動をする(点の移動)。
+ * @param   {THREE.Vector3} start 開始点
+ * @param   {THREE.Vector3} end 目的地
+ * @param   {...GameObject} objs 障害物
+ * @returns {THREE.Vector3} 実際の終着点
+ */
+function calc_route(start,end,...objs){
+	while (!start.equals(end)){
+		let res = new Casters.Ray(start,end).test(...objs)
+		if(!res.axis)break;
+		start = res.end;
+		switch (res.axis) {
+			case "x":
+				end.x=start.x
+				break;
+			case "y":
+				end.y=start.y
+				break;
+			case "z":
+				end.z=start.z
+				break;
+		}
+	}
+	return end
+}
+/**
+ * ボックス(ボックスキャスト用)。
+ */
+exports.Box=class Box{
+	/**
+	 * @type {exports.Ray}
+	 */
+	#ray
+	/**
+	 * 
+	 * @param {THREE.Vector3} start 
+	 * @param {THREE.Vector3} end 
+	 * @param {THREE.Vector3} min 
+	 * @param {THREE.Vector3} max 
+	 */
+	constructor(start,end,min,max){
+		this.#ray=new Casters.Ray(start,end)
+		/**
+		 * @type {THREE.Vector3}
+		 */
+		this.min=min
+		/**
+		 * @type {THREE.Vector3}
+		 */
+		this.max=max
+	}
+	get hit(){
+		return this.#ray.hit
+	}
+	get start(){
+		return this.#ray.start
+	}
+	get end(){
+		return this.#ray.end
+	}
+	get length(){
+		return this.#ray.length
+	}
+	/**
+	 * 衝突をテストする。
+	 * @param  {...GameObject} objs 
+	 * @returns {this} this
+	 */
+	test(...objs){
+		this.#ray.test(...objs.map(o=>new GameObject({
+			max:o.max.clone().sub(this.min),
+			min:o.min.clone().sub(this.max),
+			pos:o.pos
+		})))
+		return this
+	}
+	/**
+	 * 衝突を考慮して移動する。
+	 * @param   {...GameObject} objs 
+	 * @returns {this} this
+	 */
+	route(...objs){
+		return calc_route(this.start,this.end,...objs.map(o=>new GameObject({
+			max:o.max.clone().sub(this.min),
+			min:o.min.clone().sub(this.max),
+			pos:o.pos
+		})))
+	}
+}
