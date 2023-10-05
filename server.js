@@ -11,6 +11,7 @@ const yargs = require('yargs').argv;
 const THREE = require("three");
 const { Vector3 } = THREE;
 const Casters=require("./Casters");
+const {EventEmitter} = require('events');
 /**
  * 
  * @param {number} val value
@@ -22,17 +23,52 @@ const clamp = (val, min, max) => Math.min(max, Math.max(min, val))
 const FIELD_SIZE = 1000;
 const Vec_1=new Vector3(1,1,1);
 
-class GameObject {
+/**
+ * @type {Map<any,Object<number,GameObject>>}
+ */
+let everything=new Map()
+
+class GameObject extends EventEmitter{
+	static #static_event=new EventEmitter();
 	/**
 	 * 
+	 * @param {string} name 
+	 * @param {(self:ThisType)=>void} func 
+	 */
+	static on(name,func){
+		GameObject.#static_event.on(name,(self,...args)=>{
+			if(self instanceof this){
+				func(self,...args)
+			}
+		})
+	}
+	static emit(...args){
+		GameObject.#static_event.emit(...args)
+	}
+	static get all(){
+		if(!everything.get(this))everything.set(this,{})
+		return everything.get(this);
+	}
+	/**
 	 * @param {Partial<ReturnType<GameObject["toJSON"]>>} obj 
 	 */
 	constructor(obj = {}) {
+		super()
 		/**
 		 * @type {number}
 		 */
 		this.id = Math.floor(Math.random() * 1000000000);
 		obj.pos=obj.pos||new Vector3();
+		{
+			let tmp=this;
+			do{
+				tmp=Object.getPrototypeOf(tmp);
+				if(!everything.get(tmp))everything.set(tmp,{});
+				let tmp_=everything.get(tmp)
+				tmp_[this.id]=this;
+				this.on("remove",()=>{delete tmp_[this.id]})
+			}while(tmp!=GameObject);
+		}
 		/**
 		 * @type {THREE.Vector3}
 		 */
@@ -53,6 +89,7 @@ class GameObject {
 		 * @type {number}
 		 */
 		this.angle_y = obj.angle_y;
+		GameObject.emit("create",this);
 	}
 	/**
 	 * @type {THREE.Vector3}
@@ -91,6 +128,9 @@ class GameObject {
 	}
 	toJSON() {
 		return { id: this.id, pos: this.pos, size: this.size, min: this.min, max: this.max, angle_x: this.angle_x, angle_y: this.angle_y };
+	}
+	remove(){
+		this.emit("remove");
 	}
 }
 class Player extends GameObject {
@@ -141,10 +181,6 @@ class Player extends GameObject {
 			this.remove();
 		}
 	}
-	remove() {
-		delete players[this.id];
-		io.to(this.socketId).emit('dead');
-	}
 	toJSON() {
 		return Object.assign(super.toJSON(), { health: this.health, maxHealth: this.maxHealth, socketId: this.socketId, point: this.point, nickname: this.nickname });
 	}
@@ -154,10 +190,9 @@ class Bullet extends GameObject {
 		super(obj);
 		this.min=(this.max=Vec_1.clone().multiplyScalar(7.5)).clone().negate();
 		this.player = obj.player;
-	}
-	remove() {
-		delete this.player.bullets[this.id];
-		delete bullets[this.id];
+		this.on("remove",()=>{
+			delete this.player.bullets[this.id];
+		})
 	}
 }
 class BotPlayer extends Player {
@@ -171,20 +206,18 @@ class BotPlayer extends Player {
 				this.shoot();
 			}
 		}, 1000 / 30);
-	}
-	remove() {
-		super.remove();
-		clearInterval(this.timer);
-		setTimeout(() => {
-			const bot = new BotPlayer({ nickname: this.nickname });
-			players[bot.id] = bot;
-		}, 3000);
+		this.on("remove",()=>{
+			clearInterval(this.timer);
+			setTimeout(() => {
+				const bot = new BotPlayer({ nickname: this.nickname });
+			}, 3000);
+		})
 	}
 }
 class Wall extends GameObject {
 }
 
-
+GameObject.#static_event.on("create")
 /**
  * @type {Object<number,Player>}
  */
