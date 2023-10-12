@@ -100,8 +100,8 @@ class GameObject extends EventEmitter{
 	get max_pos(){
 		return new Vector3().addVectors(this.pos,this.max);
 	}
-	move(distance_x, distance_y = 0) {
-		const d=new Vector3(distance_x * Math.cos(this.angle_x)-distance_y * Math.sin(this.angle_x),0, distance_x * Math.sin(this.angle_x)+distance_y * Math.cos(this.angle_x)), 
+	move(distance_x, distance_y = 0,distance_z=0) {
+		const d=new Vector3(distance_x * Math.cos(this.angle_x)-distance_y * Math.sin(this.angle_x),distance_z, distance_x * Math.sin(this.angle_x)+distance_y * Math.cos(this.angle_x)), 
 			to_pos=new Vector3().addVectors(this.pos, d)
 		this.pos.copy(new Casters.Box(this.pos, to_pos, this.min, this.max).route(...Object.values(Wall.all)))
 		return to_pos.equals(this.pos);
@@ -112,7 +112,7 @@ class GameObject extends EventEmitter{
 	 * @returns これらのオブジェクトが接触しているかどうか
 	 */
 	intersect(obj) {
-		return  [...obj.max_pos.sub(this.min_pos).toArray(),...this.max_pos.sub(obj.min_pos).toArray()].every(v=>v>=0);
+		return  [...obj.max_pos.sub(this.min_pos).toArray(),...this.max_pos.sub(obj.min_pos).toArray()].every(v=>v>0);
 	}
 	intersectWalls() {
 		return Object.values(Wall.all).some((wall) => this.intersect(wall));
@@ -140,6 +140,7 @@ class Player extends GameObject {
 			this.pos.x = Math.random() * (FIELD_SIZE - this.size.x) - this.min.x;
 			this.pos.z = Math.random() * (FIELD_SIZE - this.size.z) - this.min.z;
 			this.angle_x = Math.random() * 2 * Math.PI;
+			this.pos.y = 0;
 		} while (this.intersectWalls());
 	}
 	shoot() {
