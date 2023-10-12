@@ -50,14 +50,15 @@ class GameObject extends EventEmitter{
 		this.id = Math.floor(Math.random() * 1000000000);
 		obj.pos=obj.pos||new Vector3();
 		{
-			let tmp=this;
+			let _tmp=this,tmp=_tmp.constructor,tmp_old;
 			do{
-				tmp=Object.getPrototypeOf(tmp);
+                tmp_old=tmp;
 				if(!everything.get(tmp))everything.set(tmp,{});
 				let tmp_=everything.get(tmp)
 				tmp_[this.id]=this;
 				this.on("remove",()=>{delete tmp_[this.id]})
-			}while(tmp!=GameObject);
+                tmp=Object.getPrototypeOf(tmp)
+			}while(tmp_old!=GameObject);
 		}
 		/**
 		 * @type {THREE.Vector3}
@@ -152,8 +153,8 @@ class Player extends GameObject {
 		});
 		bullet.move(this.max.x / 2);
 		this.bullets[bullet.id] = bullet;
-		bullets[bullet.id] = bullet;
 	}
+    ray(){}
 	damage() {
 		this.health--;
 		if (this.health === 0) {
@@ -187,7 +188,7 @@ class BotPlayer extends Player {
 		}, 1000 / 30);
 		this.on("remove",()=>{
 			clearInterval(this.timer);
-			setTimeout(new BotPlayer({ nickname: this.nickname }), 3000);
+			setTimeout(()=>new BotPlayer({ nickname: this.nickname }), 3000);
 		})
 	}
 }
