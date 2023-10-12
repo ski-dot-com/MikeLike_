@@ -89,9 +89,9 @@ io.on('connection', function (socket) {
 		if (!player || player.health === 0) { return; }
 		player.shoot();
 	});
-	socket.on('ray', function () {
+	socket.on('jump', function () {
 		if (!player || player.health === 0) { return; }
-		player.move(0,0,100);
+		if(player.onground)player.sy=100;
 	});
 	socket.on('disconnect', () => {
 		if (!player) { return; }
@@ -143,7 +143,9 @@ setInterval(() => {
 			movement.r_dy = 0;
 		}
 		player.angle_y = clamp(player.angle_y, -Math.PI / 2, Math.PI / 2)
-		player.move(0,0,-100/30)
+		player.sy-=100/30
+		player.onground=false;
+		player.move(0,0,player.sy/30);
 	});
 	Object.values(bullets).forEach((bullet) => {
 		if (!bullet.move(10)) {

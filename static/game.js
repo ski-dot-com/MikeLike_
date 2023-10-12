@@ -136,11 +136,11 @@ let movement = {
             }
             socket.emit('movement', movement);
         }
-        if (event.key === ' ' && event.type === 'keydown') {
+        if (event.key === 'e' && event.type === 'keydown') {
             socket.emit('shoot');
         }
-        if (event.key === 'r' && event.type === 'keydown') {
-            socket.emit('ray');
+        if (event.key === ' ' && event.type === 'keydown') {
+            socket.emit('jump');
         }
     }
     document.addEventListener("keydown", tmp)

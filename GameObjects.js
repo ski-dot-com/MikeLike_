@@ -103,8 +103,10 @@ class GameObject extends EventEmitter{
 	move(distance_x, distance_y = 0,distance_z=0) {
 		const d=new Vector3(distance_x * Math.cos(this.angle_x)-distance_y * Math.sin(this.angle_x),distance_z, distance_x * Math.sin(this.angle_x)+distance_y * Math.cos(this.angle_x)), 
 			to_pos=new Vector3().addVectors(this.pos, d)
-		this.pos.copy(new Casters.Box(this.pos, to_pos, this.min, this.max).route(...Object.values(Wall.all)))
-		return to_pos.equals(this.pos);
+        let tmp;
+		this.pos.copy((tmp=new Casters.Box(this.pos, to_pos, this.min, this.max)).route(...Object.values(Wall.all)))
+		this.emit("hit",tmp.axises)
+        return to_pos.equals(this.pos);
 	}
 	/**
 	 * 
@@ -125,23 +127,51 @@ class GameObject extends EventEmitter{
 	}
 }
 class Player extends GameObject {
+	onground=false
 	constructor(obj = {}) {
 		super(obj);
+        /**
+         * @type {number}
+         */
 		this.socketId = obj.socketId;
+        /**
+         * @type {string}
+         */
 		this.nickname = obj.nickname;
 		this.min.x = this.min.z = -(this.max.x = this.max.z = 40);
 		this.max.y = 80;
+        /**
+         * @type {number}
+         */
 		this.health = this.maxHealth = 10;
 		this.bullets = {};
+        /**
+         * @type {number}
+         */
 		this.point = 0;
 		this.movement = {};
+        /**
+         * @type {number}
+         */
 		this.angle_y = 0;
+		/**
+		 * @type {number}
+		 */
+        this.sy=0
 		do {
 			this.pos.x = Math.random() * (FIELD_SIZE - this.size.x) - this.min.x;
 			this.pos.z = Math.random() * (FIELD_SIZE - this.size.z) - this.min.z;
 			this.angle_x = Math.random() * 2 * Math.PI;
 			this.pos.y = 0;
 		} while (this.intersectWalls());
+        this.on("hit",(axises)=>{
+			for (const c of axises) {
+				if(c=="y"){
+					if(this.sy<0)this.onground=true
+					this.sy=0
+				}
+			}
+        })
 	}
 	shoot() {
 		if (Object.keys(this.bullets).length >= 3) {

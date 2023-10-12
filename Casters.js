@@ -101,10 +101,12 @@ exports.Ray=Ray
  * 衝突を考慮しながら、移動をする(点の移動)。
  * @param   {THREE.Vector3} start 開始点
  * @param   {THREE.Vector3} end 目的地
- * @param   {...GameObject} objs 障害物
+ * @param   {GameObject[]} objs 障害物
+ * @param   {{axises?:string}} ref 障害物
  * @returns {THREE.Vector3} 実際の終着点
  */
-function calc_route(start,end,...objs){
+function calc_route(start,end,objs,ref={}){
+	ref.axises=""
 	while (!start.equals(end)){
 		let res = new Ray(start,end).test(...objs)
 		if(!res.axis)break;
@@ -120,6 +122,7 @@ function calc_route(start,end,...objs){
 				end.z=start.z
 				break;
 		}
+		ref.axises+=res.axis
 	}
 	return end
 }
@@ -131,6 +134,11 @@ class Box{
 	 * @type {Ray}
 	 */
 	#ray
+	/**
+	 * ぶつかった面
+	 * @type {string?}
+	 */
+	axises
 	/**
 	 * 
 	 * @param {THREE.Vector3} start 
@@ -177,13 +185,16 @@ class Box{
 	/**
 	 * 衝突を考慮して移動する。
 	 * @param   {...{min:Vector3,max:Vector3,pos:Vector3}} objs 
-	 * @returns {this} this
+	 * @returns {THREE.Vector3} 
 	 */
 	route(...objs){
-		return calc_route(this.start,this.end,...objs.map(o=>({
+		let tmp={}
+		let res=calc_route(this.start,this.end,objs.map(o=>({
 			max_pos:o.max.clone().sub(this.min).add(o.pos),
 			min_pos:o.min.clone().sub(this.max).add(o.pos),
-		})))
+		})),tmp)
+		this.axises=tmp.axises
+		return res;
 	}
 }
 exports.Box=Box
