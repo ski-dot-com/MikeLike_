@@ -46,25 +46,29 @@ let bullets = Bullet.all;
 let walls = Wall.all;
 
 for (let i = 0; i < 3; i++) {
-	const wall = new Wall({
+	new Wall({
 		pos: new Vector3(Math.random() * FIELD_SIZE,0,Math.random() * FIELD_SIZE),
 		max: new Vector3(200,100,50),
 	});
 }
-for(let x = -200; x<=FIELD_SIZE+200;x+=FIELD_SIZE+200){
-	const wall = new Wall({
+for(let x = -20; x<=FIELD_SIZE+20;x+=FIELD_SIZE+20){
+	new Wall({
 		pos: new Vector3(x,0,0),
-		max: new Vector3(200,100,FIELD_SIZE),
+		max: new Vector3(20,100,FIELD_SIZE),
 	});
 }
-for(let z = -200; z<=FIELD_SIZE+200;z+=FIELD_SIZE+200){
-	const wall = new Wall({
-		pos: new Vector3(-200,0,z),
-		max: new Vector3(FIELD_SIZE+400,100,200),
+for(let z = -20; z<=FIELD_SIZE+20;z+=FIELD_SIZE+20){
+	new Wall({
+		pos: new Vector3(-20,0,z),
+		max: new Vector3(FIELD_SIZE+40,100,20),
 	});
 }
+new Wall({
+	pos: new Vector3(-20,-10,-20),
+	max: new Vector3(FIELD_SIZE+40,10,FIELD_SIZE+40),
+});
 
-const bot = new BotPlayer({ nickname: 'bot' });
+new BotPlayer({ nickname: 'bot' });
 
 io.on('connection', function (socket) {
 	/**
@@ -85,9 +89,9 @@ io.on('connection', function (socket) {
 		if (!player || player.health === 0) { return; }
 		player.shoot();
 	});
-	socket.on('ray', function () {
+	socket.on('jump', function () {
 		if (!player || player.health === 0) { return; }
-		player.ray();
+		if(player.onground)player.sy=400;
 	});
 	socket.on('disconnect', () => {
 		if (!player) { return; }
@@ -97,7 +101,11 @@ io.on('connection', function (socket) {
 });
 
 setInterval(() => {
-	Object.values(players).forEach((player) => {
+	Object.values(players).forEach((player_) => {
+		/**
+		 * @type {Player}
+		 */
+		let player=player_
 		const movement = player.movement;
 		// console.log(movement);
 		if (movement.m_forward) {
@@ -135,6 +143,9 @@ setInterval(() => {
 			movement.r_dy = 0;
 		}
 		player.angle_y = clamp(player.angle_y, -Math.PI / 2, Math.PI / 2)
+		player.sy-=800/30
+		player.onground=false;
+		player.move(0,0,player.sy/30);
 	});
 	Object.values(bullets).forEach((bullet) => {
 		if (!bullet.move(10)) {
