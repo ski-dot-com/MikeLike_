@@ -91,7 +91,7 @@ io.on('connection', function (socket) {
 	});
 	socket.on('jump', function () {
 		if (!player || player.health === 0) { return; }
-		if(player.onground)player.sy=100;
+		if(player.onground)player.sy=400;
 	});
 	socket.on('disconnect', () => {
 		if (!player) { return; }
@@ -143,7 +143,7 @@ setInterval(() => {
 			movement.r_dy = 0;
 		}
 		player.angle_y = clamp(player.angle_y, -Math.PI / 2, Math.PI / 2)
-		player.sy-=100/30
+		player.sy-=800/30
 		player.onground=false;
 		player.move(0,0,player.sy/30);
 	});

@@ -14,17 +14,8 @@ const camera = new THREE.PerspectiveCamera(100, 1, 0.1, 2000);
 const isFPS = true;
 const mouse_rotate_speed = .001;
 
-// Floor
-const floorGeometry = new THREE.PlaneGeometry(1000, 1000, 1, 1);
-const floorMaterial = new THREE.MeshLambertMaterial({ color: 'lawngreen' });
-const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
-floorMesh.position.set(500, 0, 500);
-floorMesh.receiveShadow = true;
-floorMesh.rotation.x = - Math.PI / 2;
-scene.add(floorMesh);
-
 camera.position.set(1000, 300, 1000);
-camera.lookAt(floorMesh.position);
+camera.lookAt(new THREE.Vector3(500, 0, 500));
 camera.matrixAutoUpdate = false;
 camera.updateMatrix();
 // Materials
