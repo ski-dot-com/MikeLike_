@@ -93,6 +93,10 @@ io.on('connection', function (socket) {
 		if (!player || player.health === 0) { return; }
 		if(player.onground)player.sy=400;
 	});
+	socket.on('click', function () {
+		if (!player || player.health === 0) { return; }
+		player.click();
+	});
 	socket.on('disconnect', () => {
 		if (!player) { return; }
 		player.remove();

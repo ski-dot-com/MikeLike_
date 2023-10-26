@@ -82,7 +82,7 @@ document.addEventListener("pointerlockerror", () => {
 canvas2d.addEventListener("click", () => {
     if (isPlaying)
         if (isPointerLocked) {
-            // TODO クリック時の処理を実装
+            socket.emit('click');
         }
         else {
             canvas2d.requestPointerLock();
