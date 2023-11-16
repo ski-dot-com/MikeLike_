@@ -4,9 +4,13 @@ const THREE = require("three");
 const { Vector3 } = THREE;
 const Casters = require("./Casters");
 const { EventEmitter } = require('events');
-const { FIELD_SIZE } = require("./const")
+const { FIELD_SIZE, BLOCK_SIZE, FLOAT_E } = require("./const")
 
 const Vec_1 = new Vector3(1, 1, 1);
+const Vec_0 = new Vector3(0, 0, 0);
+function round_E(x){
+	return Math.round(x/FLOAT_E)*FLOAT_E
+}
 
 /**
  * @type {Map<any,Object<number,GameObject>>}
@@ -104,7 +108,7 @@ class GameObject extends EventEmitter {
 		const d = new Vector3(distance_x * Math.cos(this.angle_x) - distance_y * Math.sin(this.angle_x), distance_z, distance_x * Math.sin(this.angle_x) + distance_y * Math.cos(this.angle_x)),
 			to_pos = new Vector3().addVectors(this.pos, d)
 		let tmp;
-		this.pos.copy((tmp = new Casters.Box(this.pos, to_pos, this.min, this.max)).route(...Object.values(Wall.all)))
+		this.pos.copy((tmp = new Casters.Box(this.pos, to_pos, this.min, this.max)).route(...Object.values(Solid.all)))
 		this.emit("hit", tmp.axises)
 		return to_pos.equals(this.pos);
 	}
@@ -116,8 +120,8 @@ class GameObject extends EventEmitter {
 	intersect(obj) {
 		return [...obj.max_pos.sub(this.min_pos).toArray(), ...this.max_pos.sub(obj.min_pos).toArray()].every(v => v > 0);
 	}
-	intersectWalls() {
-		return Object.values(Wall.all).some((wall) => this.intersect(wall));
+	intersectSolids() {
+		return Object.values(Solid.all).some((wall) => this.intersect(wall));
 	}
 	toJSON() {
 		return { id: this.id, pos: this.pos, size: this.size, min: this.min, max: this.max, angle_x: this.angle_x, angle_y: this.angle_y };
@@ -163,7 +167,7 @@ class Player extends GameObject {
 			this.pos.z = Math.random() * (FIELD_SIZE - this.size.z) - this.min.z;
 			this.angle_x = Math.random() * 2 * Math.PI;
 			this.pos.y = 0;
-		} while (this.intersectWalls());
+		} while (this.intersectSolids());
 		this.on("hit", (axises) => {
 			for (const c of axises) {
 				if (c == "y") {
@@ -185,17 +189,32 @@ class Player extends GameObject {
 		bullet.move(this.max.x / 2);
 		this.bullets[bullet.id] = bullet;
 	}
-	click() {
+	right_click() {
 		const eye = new Vector3(0, 40, 0).add(this.pos)
+		let x,y,z;
 		const caster = new Casters.Ray(eye, new Vector3(
-			Math.cos(this.angle_x) * Math.cos(this.angle_y),
-			Math.sin(this.angle_y), 
-			Math.sin(this.angle_x)
-			).multiplyScalar(1000).add(eye)).test(...Object.values(everything.get(Player)).filter(x => x !== this), ...Object.values(everything.get(Wall)))
-		if (caster.hit instanceof Wall) {
-			console.log(`(${caster.end.x}, ${caster.end.y}, ${caster.end.z})`);
+			x=Math.cos(this.angle_x) * Math.cos(this.angle_y),
+			y=Math.sin(this.angle_y), 
+			z=Math.sin(this.angle_x)
+			).multiplyScalar(1000).add(eye)).test(...Object.values(everything.get(Player)).filter(x => x !== this), ...Object.values(everything.get(Solid)))
+		if (caster.hit instanceof Solid) {
+			console.log(`click at: (${caster.end.x}, ${caster.end.y}, ${caster.end.z})`);
+			let axis=caster.axis,is_negative={"x":[x],"y":[y],"z":[z]}[axis]>0
+			console.log(`click facing: ${axis}${is_negative?"-":"+"}`)
+			let tmp_x=Math.floor(round_E(caster.end.x)/BLOCK_SIZE)-(is_negative&&axis=="x"),
+				tmp_y=Math.floor(round_E(caster.end.y)/BLOCK_SIZE)-(is_negative&&axis=="y"),
+				tmp_z=Math.floor(round_E(caster.end.z)/BLOCK_SIZE)-(is_negative&&axis=="z");
+			console.log(`place at: (${tmp_x},${tmp_y},${tmp_z})`)
+			let block =Block.place(tmp_x,tmp_y,tmp_z);
+			let tmp;
+			console.log(tmp=[...Object.values(everything.get(Solid)),...Object.values(everything.get(Player))].filter(x=>block.intersect(x)))
+			if(tmp.some(x=>x!=block.solid)){
+				console.log(`collision occured.`)
+				block.remove();
+			}
 		}
 	}
+	
 	damage() {
 		this.health--;
 		if (this.health === 0) {
@@ -233,12 +252,53 @@ class BotPlayer extends Player {
 		})
 	}
 }
-class Wall extends GameObject {
+class Solid extends GameObject {
+	constructor(obj={}) {
+		super(obj);
+		this.color = obj.color||0x777777;
+	}
+	toJSON() {
+		return Object.assign(super.toJSON(), {color:this.color});
+	}
+}
+class Wall extends Solid{
+	constructor(obj={}) {
+		obj.color=obj.color||"firebrick";
+		super(obj);
+	}
+}
+class Block extends GameObject{
+	constructor(obj={}) {
+		super(obj);
+		this.color=obj.color||"lime";
+		this.min=Vec_0.clone()
+		this.max=Vec_1.clone().multiplyScalar(BLOCK_SIZE)
+		this.solid=new Solid({pos:this.pos,min:this.min,max:this.max,color:this.color})
+		this.addListener("remove",()=>{
+			this.solid.remove()
+		})
+	}
+	/**
+	 * 
+	 * @param {number} x 
+	 * @param {number} y 
+	 * @param {number} z 
+	 * @param {{}} options 
+	 * @returns 
+	 */
+	static place(x,y,z,options={}){
+		return new this(Object.assign(options,{pos:new Vector3(x,y,z).multiplyScalar(BLOCK_SIZE)}))
+	}
+	intersect(obj){
+		return this.solid.intersect(obj)
+	}
 }
 module.exports = {
 	GameObject,
 	Player,
 	Bullet,
 	BotPlayer,
-	Wall
+	Solid,
+	Wall,
+	Block
 }

@@ -1,3 +1,4 @@
+"use strict";
 const socket = io();
 const canvas2d = $('#canvas-2d')[0];
 const context = canvas2d.getContext('2d');
@@ -19,8 +20,14 @@ camera.lookAt(new THREE.Vector3(500, 0, 500));
 camera.matrixAutoUpdate = false;
 camera.updateMatrix();
 // Materials
-const bulletMaterial = new THREE.MeshLambertMaterial({ color: 0x808080 });
-const wallMaterial = new THREE.MeshLambertMaterial({ color: 'firebrick' });
+{
+    const colorMatDict={}
+    var getColorMaterial=(color)=>{
+        return color in colorMatDict?colorMatDict[color]:(colorMatDict[color]=new THREE.MeshLambertMaterial({ color }))
+    }
+}
+const bulletMaterial = getColorMaterial(0x808080);
+const wallMaterial = getColorMaterial('firebrick');
 const playerTexture = new THREE.Texture(playerImage);
 playerTexture.needsUpdate = true;
 const playerMaterial = new THREE.MeshLambertMaterial({ map: playerTexture });
@@ -79,10 +86,10 @@ document.addEventListener("pointerlockchange", () => {
 document.addEventListener("pointerlockerror", () => {
     isPointerLocked = false;
 })
-canvas2d.addEventListener("click", () => {
+canvas2d.addEventListener("click", (ev) => {
     if (isPlaying)
         if (isPointerLocked) {
-            socket.emit('click');
+            socket.emit(ev.button==0?'click':'right_click');
         }
         else {
             canvas2d.requestPointerLock();
@@ -176,7 +183,7 @@ $('#canvas-2d').on('touchend', (event) => {
 });
 
 const Meshes = [];
-socket.on('state', (players, bullets, walls) => {
+socket.on('state', (players, bullets, solids) => {
     Object.values(Meshes).forEach((mesh) => { mesh.used = false; });
     /**
      * @typedef {{x:number,y:number,z:number}} Vector3Like
@@ -235,7 +242,7 @@ socket.on('state', (players, bullets, walls) => {
 
         if (!playerMesh.getObjectByName('body')) {
             console.log('create body mesh');
-            mesh = new THREE.Mesh(new THREE.BoxGeometry(player.size.x, player.size.y, player.size.z), playerMaterial);
+            let mesh = new THREE.Mesh(new THREE.BoxGeometry(player.size.x, player.size.y, player.size.z), playerMaterial);
             mesh.castShadow = true;
             mesh.name = 'body';
             playerMesh.add(mesh);
@@ -244,7 +251,7 @@ socket.on('state', (players, bullets, walls) => {
         if (font) {
             if (!playerMesh.getObjectByName('nickname')) {
                 console.log('create nickname mesh');
-                mesh = new THREE.Mesh(
+                let mesh = new THREE.Mesh(
                     new THREE.TextGeometry(player.nickname,
                         { font: font, size: 10, height: 1 }),
                     nicknameMaterial,
@@ -309,15 +316,14 @@ socket.on('state', (players, bullets, walls) => {
     });
 
     // Walls
-    Object.values(walls).forEach((wall) => {
-        drawHitBox(wall,wallMaterial)
+    Object.values(solids).forEach((solid) => {
+        drawHitBox(solid,getColorMaterial(solid.color))
     });
 
     // Clear unused Meshes
     Object.keys(Meshes).forEach((key) => {
         const mesh = Meshes[key];
         if (!mesh.used) {
-            console.log('removing mesh', key);
             scene.remove(mesh);
             mesh.traverse((mesh2) => {
                 if (mesh2.geometry) {
@@ -325,6 +331,7 @@ socket.on('state', (players, bullets, walls) => {
                 }
             });
             delete Meshes[key];
+            console.log(`mesh#${key} collected`);
         }
     });
     movement.r_dx=movement.r_dy=0;
