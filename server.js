@@ -15,7 +15,8 @@ const {
     Player,
     Bullet,
     BotPlayer,
-    Wall
+    Solid,
+	Wall
 } = require("./GameObjects");
 const {FIELD_SIZE}=require("./const");
 /**
@@ -41,9 +42,9 @@ let players = Player.all;
  */
 let bullets = Bullet.all;
 /**
- * @type {Object<number,Wall>}
+ * @type {Object<number,Solid>}
  */
-let walls = Wall.all;
+let solids = Solid.all;
 
 for (let i = 0; i < 3; i++) {
 	new Wall({
@@ -92,6 +93,14 @@ io.on('connection', function (socket) {
 	socket.on('jump', function () {
 		if (!player || player.health === 0) { return; }
 		if(player.onground)player.sy=400;
+	});
+	socket.on('right_click', function () {
+		if (!player || player.health === 0) { return; }
+		player.right_click();
+	});
+	socket.on('left_click', function () {
+		if (!player || player.health === 0) { return; }
+		player.left_click();
 	});
 	socket.on('disconnect', () => {
 		if (!player) { return; }
@@ -148,7 +157,7 @@ setInterval(() => {
 		player.move(0,0,player.sy/30);
 	});
 	Object.values(bullets).forEach((bullet) => {
-		if (!bullet.move(10)) {
+		if (!bullet.move(10,0,0,true,true)) {
 			bullet.remove();
 			return;
 		}
@@ -162,7 +171,7 @@ setInterval(() => {
 			}
 		});
 	});
-	io.sockets.emit('state', players, bullets, walls);
+	io.sockets.emit('state', players, bullets, solids);
 }, 1000 / 30);
 
 
