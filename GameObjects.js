@@ -200,6 +200,7 @@ class Player extends GameObject {
 	right_click() {
 		const eye = new Vector3(0, 40, 0).add(this.pos)
 		let x,y,z;
+		console.log(`eye: (${eye.x}, ${eye.y}, ${eye.z})`);
 		const caster = new Casters.Ray(eye, new Vector3(
 			x=Math.cos(this.angle_y) * Math.cos(this.angle_x),
 			y=Math.sin(this.angle_y), 
@@ -218,6 +219,19 @@ class Player extends GameObject {
 				console.log(`collision occured.`)
 				block.remove();
 			}
+		}
+		this.shoot()
+	}
+	left_click() {
+		const eye = new Vector3(0, 40, 0).add(this.pos)
+		let x,y,z;
+		const caster = new Casters.Ray(eye, new Vector3(
+			x=Math.cos(this.angle_y) * Math.cos(this.angle_x),
+			y=Math.sin(this.angle_y), 
+			z=Math.cos(this.angle_y) * Math.sin(this.angle_x)
+			).multiplyScalar(1000).add(eye)).test(...Object.values(everything.get(Player)).filter(x => x !== this), ...Object.values(everything.get(Solid)))
+		if (caster.hit instanceof BlockSolid) {
+			caster.hit.remove();
 		}
 		this.shoot()
 	}
@@ -268,6 +282,15 @@ class Solid extends GameObject {
 		return Object.assign(super.toJSON(), {color:this.color});
 	}
 }
+class BlockSolid extends Solid {
+	constructor(obj={}) {
+		super(obj);
+		this.block = obj.block;
+	}
+	toJSON() {
+		return Object.assign(super.toJSON(), {block:this.block});
+	}
+}
 class Wall extends Solid{
 	constructor(obj={}) {
 		obj.color=obj.color||"firebrick";
@@ -280,7 +303,7 @@ class Block extends GameObject{
 		this.color=obj.color||"lime";
 		this.min=Vec_0.clone()
 		this.max=Vec_1.clone().multiplyScalar(BLOCK_SIZE)
-		this.solid=new Solid({pos:this.pos,min:this.min,max:this.max,color:this.color})
+		this.solid=new BlockSolid({pos:this.pos,min:this.min,max:this.max,color:this.color,block:this})
 		this.addListener("remove",()=>{
 			this.solid.remove()
 		})
@@ -307,5 +330,6 @@ module.exports = {
 	BotPlayer,
 	Solid,
 	Wall,
-	Block
+	Block,
+	BlockSolid
 }

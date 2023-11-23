@@ -98,6 +98,10 @@ io.on('connection', function (socket) {
 		if (!player || player.health === 0) { return; }
 		player.right_click();
 	});
+	socket.on('left_click', function () {
+		if (!player || player.health === 0) { return; }
+		player.left_click();
+	});
 	socket.on('disconnect', () => {
 		if (!player) { return; }
 		player.remove();

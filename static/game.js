@@ -89,7 +89,7 @@ document.addEventListener("pointerlockerror", () => {
 canvas2d.addEventListener("click", (ev) => {
     if (isPlaying)
         if (isPointerLocked) {
-            socket.emit(ev.button==0?'click':'right_click');
+            socket.emit(ev.button==0?'left_click':'right_click');
         }
         else {
             canvas2d.requestPointerLock();
