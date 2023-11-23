@@ -153,7 +153,7 @@ setInterval(() => {
 		player.move(0,0,player.sy/30);
 	});
 	Object.values(bullets).forEach((bullet) => {
-		if (!bullet.move(10)) {
+		if (!bullet.move(10,0,0,true,true)) {
 			bullet.remove();
 			return;
 		}

@@ -104,8 +104,15 @@ class GameObject extends EventEmitter {
 	get max_pos() {
 		return new Vector3().addVectors(this.pos, this.max);
 	}
-	move(distance_x, distance_y = 0, distance_z = 0) {
-		const d = new Vector3(distance_x * Math.cos(this.angle_x) - distance_y * Math.sin(this.angle_x), distance_z, distance_x * Math.sin(this.angle_x) + distance_y * Math.cos(this.angle_x)),
+	move(distance_x, distance_y = 0, distance_z = 0, use_angle_x=true, use_angle_y=false) {
+		let real_dx=distance_x,real_dy=distance_z,real_dz=distance_y;
+		if(use_angle_y){
+			[real_dx,real_dy]=[real_dx * Math.cos(this.angle_y) - real_dy * Math.sin(this.angle_y),real_dx * Math.sin(this.angle_y) + real_dy * Math.cos(this.angle_y)];
+		}
+		if(use_angle_x){
+			[real_dx,real_dz]=[real_dx * Math.cos(this.angle_x) - real_dz * Math.sin(this.angle_x),real_dx * Math.sin(this.angle_x) + real_dz * Math.cos(this.angle_x)];
+		}
+		const d = new Vector3(real_dx,real_dy,real_dz),
 			to_pos = new Vector3().addVectors(this.pos, d)
 		let tmp;
 		this.pos.copy((tmp = new Casters.Box(this.pos, to_pos, this.min, this.max)).route(...Object.values(Solid.all)))
@@ -178,41 +185,41 @@ class Player extends GameObject {
 		})
 	}
 	shoot() {
-		if (Object.keys(this.bullets).length >= 3) {
-			return;
-		}
+		// if (Object.keys(this.bullets).length >= 3) {
+		// 	return;
+		// }
 		const bullet = new Bullet({
-			pos: this.pos.clone().add(new Vector3(0, 40)),
+			pos: this.pos.clone().add(new Vector3(0, 40, 0)),
 			angle_x: this.angle_x,
+			angle_y: this.angle_y,
 			player: this,
 		});
-		bullet.move(this.max.x / 2);
+		bullet.move(this.max.x / 2,0,0,true,true);
 		this.bullets[bullet.id] = bullet;
 	}
 	right_click() {
 		const eye = new Vector3(0, 40, 0).add(this.pos)
 		let x,y,z;
 		const caster = new Casters.Ray(eye, new Vector3(
-			x=Math.cos(this.angle_x) * Math.cos(this.angle_y),
+			x=Math.cos(this.angle_y) * Math.cos(this.angle_x),
 			y=Math.sin(this.angle_y), 
-			z=Math.sin(this.angle_x)
+			z=Math.cos(this.angle_y) * Math.sin(this.angle_x)
 			).multiplyScalar(1000).add(eye)).test(...Object.values(everything.get(Player)).filter(x => x !== this), ...Object.values(everything.get(Solid)))
 		if (caster.hit instanceof Solid) {
 			console.log(`click at: (${caster.end.x}, ${caster.end.y}, ${caster.end.z})`);
-			let axis=caster.axis,is_negative={"x":[x],"y":[y],"z":[z]}[axis]>0
+			let axis=caster.axis,is_negative={"x":x,"y":y,"z":z}[axis]>0
 			console.log(`click facing: ${axis}${is_negative?"-":"+"}`)
 			let tmp_x=Math.floor(round_E(caster.end.x)/BLOCK_SIZE)-(is_negative&&axis=="x"),
 				tmp_y=Math.floor(round_E(caster.end.y)/BLOCK_SIZE)-(is_negative&&axis=="y"),
 				tmp_z=Math.floor(round_E(caster.end.z)/BLOCK_SIZE)-(is_negative&&axis=="z");
 			console.log(`place at: (${tmp_x},${tmp_y},${tmp_z})`)
 			let block =Block.place(tmp_x,tmp_y,tmp_z);
-			let tmp;
-			console.log(tmp=[...Object.values(everything.get(Solid)),...Object.values(everything.get(Player))].filter(x=>block.intersect(x)))
-			if(tmp.some(x=>x!=block.solid)){
+			if([...Object.values(everything.get(Solid)),...Object.values(everything.get(Player))].filter(x=>block.intersect(x)).some(x=>x!=block.solid)){
 				console.log(`collision occured.`)
 				block.remove();
 			}
 		}
+		this.shoot()
 	}
 	
 	damage() {
