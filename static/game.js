@@ -307,6 +307,9 @@ socket.on('state', (players, bullets, solids) => {
             context.font = '30px Bold Arial';
             context.fillText('HP', 20, 80);
             context.fillText('*'.repeat(player.health).padEnd(10,"-"), 100, 80);
+            context.font = '30px Bold Arial';
+            context.fillText('pos', 20, 120);
+            context.fillText(`(${player.pos.x},${player.pos.y},${player.pos.z})`, 100, 120);
         }
     });
 

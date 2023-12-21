@@ -11,10 +11,14 @@ class Ray{
 	 */
 	#direction
 	/**
+	 * @type {(l:number,r:number)=>boolean}
+	 */
+	#comparer
+	/**
 	 * @param {THREE.Vector3} start 
 	 * @param {THREE.Vector3} end 
 	 */
-	constructor(start,end){
+	constructor(start,end,exclude_edge=false){
 		/**
 		 * @type {THREE.Vector3}
 		 */
@@ -39,6 +43,8 @@ class Ray{
 		this.axis=null
 		
 		// console.log(this.#direction)
+		this.exclude_edge=exclude_edge
+		this.#comparer=exclude_edge?(l,r)=>l<r:(l,r)=>l<=r;
 	}
 	/**
 	 * 衝突をテストする。
@@ -54,7 +60,7 @@ class Ray{
 				if(scaler<0||scaler>=this.length)break;
 				const end_cand=this.#direction.clone().multiplyScalar(scaler).add(this.start);
 				//if(obj instanceof Player)console.log(`(wall).x.end_cand:`, end_cand)
-				if(!(obj.min_pos.y<=end_cand.y&&end_cand.y<=obj.max_pos.y&&obj.min_pos.z<=end_cand.z&&end_cand.z<=obj.max_pos.z))break;
+				if(!(this.#comparer(obj.min_pos.y,end_cand.y)&&this.#comparer(end_cand.y,obj.max_pos.y)&&this.#comparer(obj.min_pos.z,end_cand.z)&&this.#comparer(end_cand.z,obj.max_pos.z)))break;
 				this.end=end_cand;
 				this.length=scaler;
 				this.hit=obj;
@@ -69,7 +75,7 @@ class Ray{
 				if(scaler<0||scaler>=this.length)break;
 				const end_cand=this.#direction.clone().multiplyScalar(scaler).add(this.start);
 				//if(obj instanceof Wall)console.log(`(wall).y.end_cand:`, end_cand)
-				if(!(obj.min_pos.z<=end_cand.z&&end_cand.z<=obj.max_pos.z&&obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x))break;
+				if(!(this.#comparer(obj.min_pos.z,end_cand.z)&&this.#comparer(end_cand.z,obj.max_pos.z)&&this.#comparer(obj.min_pos.x,end_cand.x)&&this.#comparer(end_cand.x,obj.max_pos.x)))break;
 				this.end=end_cand;
 				this.length=scaler;
 				this.hit=obj;
@@ -84,7 +90,7 @@ class Ray{
 				if(scaler<0||scaler>=this.length)break;
 				const end_cand=this.#direction.clone().multiplyScalar(scaler).add(this.start);
 				//if(obj instanceof Player)console.log(`(wall).z.end_cand:`, end_cand)
-				if(!(obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x&&obj.min_pos.x<=end_cand.x&&end_cand.x<=obj.max_pos.x))break;
+				if(!(this.#comparer(obj.min_pos.x,end_cand.x)&&this.#comparer(end_cand.x,obj.max_pos.x)&&this.#comparer(obj.min_pos.y,end_cand.y)&&this.#comparer(end_cand.y,obj.max_pos.y)))break;
 				this.end=end_cand;
 				this.length=scaler;
 				this.hit=obj;
@@ -147,7 +153,7 @@ class Box{
 	 * @param {THREE.Vector3} max 
 	 */
 	constructor(start,end,min,max){
-		this.#ray=new Ray(start,end)
+		this.#ray=new Ray(start,end,true)
 		/**
 		 * @type {THREE.Vector3}
 		 */

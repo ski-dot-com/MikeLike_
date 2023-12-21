@@ -14,7 +14,6 @@ const {
     GameObject,
     Player,
     Bullet,
-    BotPlayer,
     Solid,
 	Wall
 } = require("./GameObjects");
@@ -69,7 +68,7 @@ new Wall({
 	max: new Vector3(FIELD_SIZE+40,10,FIELD_SIZE+40),
 });
 
-new BotPlayer({ nickname: 'bot' });
+//new BotPlayer({ nickname: 'bot' });
 
 io.on('connection', function (socket) {
 	/**
