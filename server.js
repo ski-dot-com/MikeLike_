@@ -45,12 +45,6 @@ let bullets = Bullet.all;
  */
 let solids = Solid.all;
 
-for (let i = 0; i < 3; i++) {
-	new Wall({
-		pos: new Vector3(Math.random() * FIELD_SIZE,0,Math.random() * FIELD_SIZE),
-		max: new Vector3(200,100,50),
-	});
-}
 for(let x = -20; x<=FIELD_SIZE+20;x+=FIELD_SIZE+20){
 	new Wall({
 		pos: new Vector3(x,0,0),
