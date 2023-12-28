@@ -18,7 +18,7 @@ class Ray{
 	 * @param {THREE.Vector3} start 
 	 * @param {THREE.Vector3} end 
 	 */
-	constructor(start,end,exclude_edge=false){
+	constructor(start,end,exclude_edge=true){
 		/**
 		 * @type {THREE.Vector3}
 		 */
