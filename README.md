@@ -1,30 +1,22 @@
-# Paiza Battle Ground
+# Mike Like
+Javascriptで実装された既視感のあるボクセルゲーム!
+![プレイ風景のスクリーンショット](screen_shots/sc0.PNG)
 
-# Play game
+([Paiza Battle Ground](https://github.com/yoshiokatsuneo/paiza-battle-ground)に基づいています。ライセンスはMITライセンスです。詳しくは、このファイルと同じフォルダにある、[PBG.LICENSE](PBG.LICENSE)をご覧ください。)
 
-https://paiza-battle-ground.paiza-user.cloud/
-
-# How to create:
-[Creating a simple 3D online multiplayer battle game using JavaScript and Node.js](https://engineering.paiza.io/entry/paizacloud_online_multiplayer_game)
-
-(Japanese: [使うのはJavaScriptとNode.jsだけ！30分で3Dオンライン対戦ゲームを作って公開してみた](https://paiza.hatenablog.com/entry/paizacloud_online_multiplayer_game) )
-
-# How to start
-
+# インストール
+事前にnpmをインストールしてください。
+node v14.18.0, npm v6.14.15での動作を確認しております。
 ```
 $ npm install
-$ node server.js
 ```
 
-or
-
+# サーバーの起動
 ```
-$ npm install
-$ nodemon server.js
+$ node server.js [-p (ポート番号)]
+```
+もしくは、
+```
+$ nodemon server.js [-p (ポート番号)]
 ```
 
-
-
-## References
-
-- https://hackernoon.com/how-to-build-a-multiplayer-browser-game-4a793818c29b
