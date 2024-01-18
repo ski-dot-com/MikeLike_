@@ -4,7 +4,7 @@ const THREE = require("three");
 const { Vector3 } = THREE;
 const Casters = require("./Casters");
 const { EventEmitter } = require('events');
-const { FIELD_SIZE, BLOCK_SIZE, FLOAT_E } = require("./const")
+const { FIELD_SIZE, BLOCK_SIZE, FLOAT_E } = require("./const");
 
 const Vec_1 = new Vector3(1, 1, 1);
 const Vec_0 = new Vector3(0, 0, 0);
