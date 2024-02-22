@@ -220,7 +220,6 @@ class Player extends GameObject {
 				block.remove();
 			}
 		}
-		this.shoot()
 	}
 	left_click() {
 		const eye = new Vector3(0, 40, 0).add(this.pos)
@@ -233,7 +232,6 @@ class Player extends GameObject {
 		if (caster.hit instanceof BlockSolid) {
 			caster.hit.remove();
 		}
-		this.shoot()
 	}
 	
 	damage() {
