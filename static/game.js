@@ -74,6 +74,12 @@ function gameStart() {
     canvas2d.requestPointerLock();
     isPlaying = true;
 }
+/**
+ * 
+ * @param {number?} ms 
+ * @returns 
+ */
+const sleep = (ms=undefined)=>new Promise(resolve=>setTimeout(resolve,ms))
 var isPointerLocked = false;
 var isPlaying = false;
 document.addEventListener("pointerlockchange", () => {
@@ -345,3 +351,6 @@ socket.on('dead', () => {
     $("#start-screen").show();
     isPlaying = false;
 });
+socket.on("message",(message, type)=>{
+
+})

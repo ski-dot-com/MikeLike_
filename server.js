@@ -100,6 +100,10 @@ io.on('connection', function (socket) {
 		player.remove();
 		player = null;
 	});
+	socket.on('comment', function (comment) {
+		if (!player || player.health === 0) { return; }
+		
+	});
 });
 
 setInterval(() => {
@@ -179,3 +183,10 @@ server.listen(port, () => {
 	console.log(`Starting server on port ${port}`);
 	console.log(`URL: http://localhost:${port}`);
 });
+/**
+ * コメントを送る。
+ * @param {string} message 送るコメント
+ */
+function sendComment(message){
+	io.sockets.emit('message', message, "comment");
+}
