@@ -364,6 +364,18 @@ socket.on("message",(message, type)=>{
     tmp.classList.add(type)
     tmp.innerText=message;
     comment_div.insertBefore(tmp,comment_div.lastElementChild)
+    setTimeout(()=>{
+        tmp.animate([
+            {
+                opacity: 1
+            },
+            {
+                opacity: 0
+            },
+        ],3000).addEventListener("finish",(ev)=>{
+            tmp.remove()
+        })
+    },12000)
 })
 comment_prompt.addEventListener("keydown",(ev)=>{
     if(ev.key!="Enter")return
