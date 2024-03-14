@@ -15,7 +15,8 @@
     <style>
       #comment-div>p{
         margin: 0px;
-        
+        background-color: #0005;
+        color: #fff;
       }
     </style>
   </head>
@@ -23,31 +24,33 @@
     <div>
         Mike Like <a href="https://github.com/ski-dot-com/MikeLike_" target=_blank>ソースコード(GitHub)</a>
     </div> 
-    <div style="width: 100%;height: 100%;aspect-ratio: 1/1;">
-      <div style="flex: 1 1; position: relative; overflow:hidden;">
-          <div id="start-screen" style="width:100%; height:100%; display: flex; align-items: center; position:absolute; z-index:10;">
-              <div style="text-align: center; width: 100%; font-size: xx-large;">
-                  <input type="text" name="nickname" id="nickname" placeholder="Your nickname" autofocus><br/><br/>
-                  <button style="font-size: xx-large;" id="start-button">Start</button>
-              </div>
-          </div>
-          <div style="width:100%; height:100%; display: flex; align-items: center; position:absolute; z-index:9;mix-blend-mode: difference;">
-            <div style="width: 64px; height: 64px; margin: 0 auto; position: relative;">
-              <div style="width: 100%; height: 100%; position: absolute;">
-                <div style="background: #fff;width:8%;height:100%;margin: 0 auto;"></div>
-              </div>
-              <div style="width: 100%; height: 100%; position: absolute;display: flex; align-items: center;">
-                <div style="background: #fff;height:8%;width:100%;"></div>
+    <div style="width: 100%; height: 100%;display: flex; flex-direction: row; align-items: center;">
+      <div style="width: 100%; height: 100%;max-height: 100dvw;display: flex; flex-direction: column;align-items: center;">
+        <div style="height: 100%; aspect-ratio: 1/1; position: relative; overflow:hidden;">
+            <div id="start-screen" style="width:100%; height:100%; display: flex; align-items: center; position:absolute; z-index:10;">
+                <div style="text-align: center; width: 100%; font-size: xx-large;">
+                    <input type="text" name="nickname" id="nickname" placeholder="Your nickname" autofocus><br/><br/>
+                    <button style="font-size: xx-large;" id="start-button">Start</button>
+                </div>
+            </div>
+            <div style="width:100%; height:100%; display: flex; align-items: center; position:absolute; z-index:9;mix-blend-mode: difference;">
+              <div style="width: 64px; height: 64px; margin: 0 auto; position: relative;">
+                <div style="width: 100%; height: 100%; position: absolute;">
+                  <div style="background: #fff;width:8%;height:100%;margin: 0 auto;"></div>
+                </div>
+                <div style="width: 100%; height: 100%; position: absolute;display: flex; align-items: center;">
+                  <div style="background: #fff;height:8%;width:100%;"></div>
+                </div>
               </div>
             </div>
-          </div>
-          <div id="comment-div" style="width:100%; height:100%; display: flex; flex-flow: column;	justify-content: flex-end; position:absolute; z-index:8;">
-            <p>test</p>
-            <p>test</p>
-            <p>test</p>
-          </div>
-          <canvas id="canvas-2d" width="1000" height="1000" style="position: absolute; width: 100%; height: 100%; z-index:2;object-fit: contain;"></canvas>
-          <canvas id="canvas-3d" width="1000" height="1000" style="position: absolute; width: 100%; height: 100%; z-index:1;object-fit: contain;"></canvas>
+            <div id="comment-div" style="width:100%; max-width: 20em; height:100%; display: flex; flex-flow: column;	justify-content: flex-end; position:absolute; z-index:8;">
+              <p>test</p>
+              <p>test</p>
+              <p>test</p>
+            </div>
+            <canvas id="canvas-2d" width="1000" height="1000" style="position: absolute; width: 100%; height: 100%; z-index:2;object-fit: contain;"></canvas>
+            <canvas id="canvas-3d" width="1000" height="1000" style="position: absolute; width: 100%; height: 100%; z-index:1;object-fit: contain;"></canvas>
+        </div>
       </div>
     </div>
     <img id="player-image" src="/static/player.gif" style="display: none;">
