@@ -4,6 +4,14 @@ const canvas2d = $('#canvas-2d')[0];
 const context = canvas2d.getContext('2d');
 const canvas3d = $('#canvas-3d')[0];
 const playerImage = $("#player-image")[0];
+/**
+ * @type {HTMLDivElement}
+ */
+const comment_div=document.getElementById("comment-div");
+/**
+ * @type {HTMLInputElement}
+ */
+const comment_prompt=document.getElementById("comment-prompt");
 
 const renderer = new THREE.WebGLRenderer({ canvas: canvas3d });
 renderer.setClearColor('skyblue');
@@ -352,5 +360,13 @@ socket.on('dead', () => {
     isPlaying = false;
 });
 socket.on("message",(message, type)=>{
-
+    const tmp = document.createElement("p");
+    tmp.classList.add(type)
+    tmp.innerText=message;
+    comment_div.insertBefore(tmp,comment_div.lastElementChild)
+})
+comment_prompt.addEventListener("keydown",(ev)=>{
+    if(ev.key!="Enter")return
+    socket.emit("comment",comment_prompt.value);
+    comment_prompt.value="";
 })

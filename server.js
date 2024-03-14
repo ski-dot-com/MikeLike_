@@ -102,7 +102,7 @@ io.on('connection', function (socket) {
 	});
 	socket.on('comment', function (comment) {
 		if (!player || player.health === 0) { return; }
-		
+		sendComment(comment, player.nickname)
 	});
 });
 
@@ -186,7 +186,10 @@ server.listen(port, () => {
 /**
  * コメントを送る。
  * @param {string} message 送るコメント
+ * @param {string} user コメントを送るユーザー名
  */
-function sendComment(message){
-	io.sockets.emit('message', message, "comment");
+function sendComment(message, user){
+	const tmp =`[${user}] `+message;
+	console.log(tmp)
+	io.sockets.emit('message', tmp, "comment");
 }
