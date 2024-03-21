@@ -41,7 +41,7 @@ class GameObject extends EventEmitter {
 	}
 	static get all() {
 		if (!everything.get(this)) everything.set(this, {})
-		return everything.get(this);
+		return everything.get(this)||{};
 	}
 	/**
 	 * @param {Partial<ReturnType<GameObject["toJSON"]>>} obj 
@@ -52,6 +52,10 @@ class GameObject extends EventEmitter {
 		 * @type {number}
 		 */
 		this.id = Math.floor(Math.random() * 1000000000);
+		/**
+		 * @type {boolean}
+		 */
+		this.removed=false;
 		obj.pos = obj.pos || new Vector3();
 		{
 			let _tmp = this, tmp = _tmp.constructor, tmp_old;
@@ -134,7 +138,7 @@ class GameObject extends EventEmitter {
 		return { id: this.id, pos: this.pos, size: this.size, min: this.min, max: this.max, angle_x: this.angle_x, angle_y: this.angle_y };
 	}
 	remove() {
-		this.emit("remove");
+		if(!this.removed)this.emit("remove");
 	}
 }
 class Player extends GameObject {
@@ -230,7 +234,7 @@ class Player extends GameObject {
 			z=Math.cos(this.angle_y) * Math.sin(this.angle_x)
 			).multiplyScalar(1000).add(eye)).test(...Object.values(everything.get(Player)).filter(x => x !== this), ...Object.values(everything.get(Solid)))
 		if (caster.hit instanceof BlockSolid) {
-			caster.hit.remove();
+			caster.hit.block.remove();
 		}
 	}
 	
@@ -283,19 +287,22 @@ class Solid extends GameObject {
 class BlockSolid extends Solid {
 	constructor(obj={}) {
 		super(obj);
+		/**
+		 * @type {Block}
+		 */
 		this.block = obj.block;
 	}
 	toJSON() {
 		return Object.assign(super.toJSON(), {block:this.block});
 	}
 }
-class Wall extends Solid{
+class Wall extends Solid {
 	constructor(obj={}) {
 		obj.color=obj.color||"firebrick";
 		super(obj);
 	}
 }
-class Block extends GameObject{
+class Block extends GameObject {
 	constructor(obj={}) {
 		super(obj);
 		this.color=obj.color||"lime";
@@ -319,6 +326,9 @@ class Block extends GameObject{
 	}
 	intersect(obj){
 		return this.solid.intersect(obj)
+	}
+	toJSON() {
+		return Object.assign(Object.fromEntries(Object.entries(super.toJSON()).filter(([s,_])=>s!="min"&&s!="max")), {color:this.color});
 	}
 }
 module.exports = {
