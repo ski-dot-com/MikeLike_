@@ -268,15 +268,24 @@ function runCommand(command,player){
 			if(args.length!=2)return runCommand("help set_block_color",player),sendMessage("[Error]: 呼び出し方が不適切です。","error");
 			sendMessage(`[Info]: ${player.nickname}が手持ちのブロックの色を"${player.color=args[1]}"に変えました。`,"info");
 			return;
+		case "save":
+			if(args.length!=1)return runCommand("help save",player),sendMessage("[Error]: 呼び出し方が不適切です。","error");
+			saveWorld()
+			sendMessage(`[Info]: ${player.nickname}がワールドをセーブしました。`,"info");
+			return;
 		case "help":
 			if(args.length!=2){
 				sendMessage("set_block_color ブロックの色","info")
 				sendMessage("help [コマンド]","info")
+				sendMessage("save","info")
 				return;
 			}
 			switch(args[1]){
 				case "set_block_color":
 					sendMessage("set_block_color ブロックの色","info")
+					return;
+				case "save":
+					sendMessage("save","info")
 					return;
 				case "help":
 					sendMessage("help [コマンド]","info")
