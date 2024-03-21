@@ -215,9 +215,21 @@ function runCommand(command,player){
 	const args = command.split(/\s/).filter(v=>!!v.length)
 	if(args.length)switch(args[0]){
 		case "set_block_color":
-			if(args.length!=2)break;// TODO: ヘルプ
+			if(args.length!=2)return runCommand("help set_block_color",player),sendMessage("[Error]: 呼び出し方が不適切です。","error");
 			sendMessage(`[Info]: ${player.nickname}が手持ちのブロックの色を"${player.color=args[1]}"に変えました。`,"info");
 			return;
+		case "help":
+			if(args.length!=2){
+				sendMessage("set_block_color ブロックの色","info")
+				sendMessage("help [コマンド]","info")
+				return;
+			}
+			switch(args[1]){
+				case "set_block_color":
+					sendMessage("set_block_color ブロックの色","info")
+				case "help":
+					sendMessage("help [コマンド]","info")
+			}
 	}
-	return sendMessage("[Error]: 不明なコマンドです。","error");
+	return runCommand("help set_block_color",player),sendMessage("[Error]: 不明なコマンドです。","error");
 }
