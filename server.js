@@ -7,15 +7,17 @@ const socketIO = require('socket.io');
 const app = express();
 const server = http.Server(app);
 const io = socketIO(server);
-const yargs = require('yargs').argv;
+const yargs = require('yargs').alias(["w","p"],["world","port"]).argv;
 const THREE = require("three");
+const fs = require("fs")
 const { Vector3 } = THREE;
 const {
     GameObject,
     Player,
     Bullet,
     Solid,
-	Wall
+	Wall,
+	Block
 } = require("./GameObjects");
 const {FIELD_SIZE}=require("./const");
 /**
@@ -185,8 +187,55 @@ app.get('/', (request, response) => {
 });
 
 const port = parseInt(yargs.port) || 3000;
+const world_path = yargs.world||path.join(__dirname,"default.mkw.json")
+readif:if(fs.existsSync(world_path)){
+	console.log(`Loading world from "${world_path}"...`);
+	readtry:try{
+		const world=JSON.parse(fs.readFileSync(world_path).toString())
+		if(world.version!==1){
+			console.error(`Error: Not supported version: ${world.version}`)
+			break readtry;
+		}
+		[...world.blocks].forEach(v=>new Block(v))
+		break readif;
+	}
+	catch(e) {
+		console.error(`Error: ${e}`)
+	}
+	console.log("Loading Skipped.")
+}
+function saveWorld(){
+	console.log(`Saving world to "${world_path}"...`);
+	fs.writeFileSync(world_path,JSON.stringify({
+		version:1,
+		blocks:Object.values(Block.all).map(v=>v.toJSON())
+	}))
+	console.log(`World was saved to "${world_path}"...`);
+}
+{
+	function exitHandler(options, exitCode) {
+		if (options.cleanup) {
+			saveWorld()
+		}
+		if (exitCode || exitCode === 0) console.log(exitCode);
+		if (options.exit) process.exit();
+	}
+
+	// do something when app is closing
+	process.on('exit', exitHandler.bind(null,{cleanup:true}));
+
+	// catches ctrl+c event
+	process.on('SIGINT', exitHandler.bind(null, {exit:true}));
+
+	// catches "kill pid" (for example: nodemon restart)
+	process.on('SIGUSR1', exitHandler.bind(null, {exit:true}));
+	process.on('SIGUSR2', exitHandler.bind(null, {exit:true}));
+
+	// catches uncaught exceptions
+	process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
+}
 server.listen(port, () => {
-	console.log(`Starting server on port ${port}`);
+	console.log(`Server Started on port ${port}`);
 	console.log(`URL: http://localhost:${port}`);
 });
 /**
