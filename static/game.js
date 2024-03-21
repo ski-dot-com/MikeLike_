@@ -128,31 +128,45 @@ let movement = {
      * @param {KeyboardEvent} event 
      */
     let tmp = (event) => {
-        const KeyToCommand = {
-            'ArrowUp': 'r_up',
-            'ArrowDown': 'r_down',
-            'ArrowLeft': 'r_left',
-            'ArrowRight': 'r_right',
-            'KeyW': 'm_forward',
-            'KeyS': 'm_back',
-            'KeyA': 'm_left',
-            'KeyD': 'm_right',
-        };
-        //console.log(`key=${event.key},members=${[...Object.keys(event)]},code=${event.code}`)
-        const command = KeyToCommand[event.code];
-        if (command) {
-            if (event.type === 'keydown') {
-                movement[command] = true;
-            } else { /* keyup */
-                movement[command] = false;
+        if(isPointerLocked){
+            const KeyToCommand = {
+                'ArrowUp': 'r_up',
+                'ArrowDown': 'r_down',
+                'ArrowLeft': 'r_left',
+                'ArrowRight': 'r_right',
+                'KeyW': 'm_forward',
+                'KeyS': 'm_back',
+                'KeyA': 'm_left',
+                'KeyD': 'm_right',
+            };
+            //console.log(`key=${event.key},members=${[...Object.keys(event)]},code=${event.code}`)
+            const command = KeyToCommand[event.code];
+            if (command) {
+                if (event.type === 'keydown') {
+                    movement[command] = true;
+                } else { /* keyup */
+                    movement[command] = false;
+                }
+                socket.emit('movement', movement);
             }
-            socket.emit('movement', movement);
-        }
-        if (event.key === 'e' && event.type === 'keydown') {
-            socket.emit('shoot');
-        }
-        if (event.key === ' ' && event.type === 'keydown') {
-            socket.emit('jump');
+            else if (event.key === 'e' && event.type === 'keydown') {
+                socket.emit('shoot');
+            }
+            else if (event.key === ' ' && event.type === 'keydown') {
+                socket.emit('jump');
+            }
+            else if (event.key === ' ' && event.type === 'keydown') {
+                socket.emit('jump');
+            }
+            else if (event.key === '/' && event.type === 'keydown'){
+                comment_prompt.value="/"
+                comment_prompt.focus()
+                event.preventDefault()
+            }
+            else if (event.key === 't' && event.type === 'keydown'){
+                comment_prompt.focus()
+                event.preventDefault()
+            }
         }
     }
     document.addEventListener("keydown", tmp)
