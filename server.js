@@ -7,7 +7,7 @@ const socketIO = require('socket.io');
 const app = express();
 const server = http.Server(app);
 const io = socketIO(server);
-const yargs = require('yargs').argv;
+const yargs = require('yargs').alias(["w","p"],["world","port"]).argv;
 const THREE = require("three");
 const { Vector3 } = THREE;
 const {
@@ -175,6 +175,7 @@ app.get('/', (request, response) => {
 });
 
 const port = parseInt(yargs.port) || 3000;
+console.log(yargs.world)
 server.listen(port, () => {
 	console.log(`Starting server on port ${port}`);
 	console.log(`URL: http://localhost:${port}`);
