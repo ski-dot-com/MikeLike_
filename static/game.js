@@ -127,7 +127,7 @@ let movement = {
     /**
      * @param {KeyboardEvent} event 
      */
-    let tmp = (event) => {
+    let tmp = async(event) => {
         if(isPointerLocked){
             const KeyToCommand = {
                 'ArrowUp': 'r_up',
@@ -155,17 +155,16 @@ let movement = {
             else if (event.key === ' ' && event.type === 'keydown') {
                 socket.emit('jump');
             }
-            else if (event.key === ' ' && event.type === 'keydown') {
-                socket.emit('jump');
-            }
             else if (event.key === '/' && event.type === 'keydown'){
+                event.preventDefault()
+                document.exitPointerLock()
                 comment_prompt.value="/"
                 comment_prompt.focus()
-                event.preventDefault()
             }
             else if (event.key === 't' && event.type === 'keydown'){
-                comment_prompt.focus()
                 event.preventDefault()
+                document.exitPointerLock()
+                comment_prompt.focus()
             }
         }
     }
@@ -395,4 +394,7 @@ comment_prompt.addEventListener("keydown",(ev)=>{
     if(ev.key!="Enter")return
     socket.emit("comment",comment_prompt.value);
     comment_prompt.value="";
+    comment_prompt.blur();
+    canvas2d.requestPointerLock();
+    canvas2d.focus();
 })
