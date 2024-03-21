@@ -4,6 +4,14 @@ const canvas2d = $('#canvas-2d')[0];
 const context = canvas2d.getContext('2d');
 const canvas3d = $('#canvas-3d')[0];
 const playerImage = $("#player-image")[0];
+/**
+ * @type {HTMLDivElement}
+ */
+const comment_div=document.getElementById("comment-div");
+/**
+ * @type {HTMLInputElement}
+ */
+const comment_prompt=document.getElementById("comment-prompt");
 
 const renderer = new THREE.WebGLRenderer({ canvas: canvas3d });
 renderer.setClearColor('skyblue');
@@ -74,6 +82,12 @@ function gameStart() {
     canvas2d.requestPointerLock();
     isPlaying = true;
 }
+/**
+ * 
+ * @param {number?} ms 
+ * @returns 
+ */
+const sleep = (ms=undefined)=>new Promise(resolve=>setTimeout(resolve,ms))
 var isPointerLocked = false;
 var isPlaying = false;
 document.addEventListener("pointerlockchange", () => {
@@ -114,31 +128,45 @@ let movement = {
      * @param {KeyboardEvent} event 
      */
     let tmp = (event) => {
-        const KeyToCommand = {
-            'ArrowUp': 'r_up',
-            'ArrowDown': 'r_down',
-            'ArrowLeft': 'r_left',
-            'ArrowRight': 'r_right',
-            'KeyW': 'm_forward',
-            'KeyS': 'm_back',
-            'KeyA': 'm_left',
-            'KeyD': 'm_right',
-        };
-        //console.log(`key=${event.key},members=${[...Object.keys(event)]},code=${event.code}`)
-        const command = KeyToCommand[event.code];
-        if (command) {
-            if (event.type === 'keydown') {
-                movement[command] = true;
-            } else { /* keyup */
-                movement[command] = false;
+        if(isPointerLocked){
+            const KeyToCommand = {
+                'ArrowUp': 'r_up',
+                'ArrowDown': 'r_down',
+                'ArrowLeft': 'r_left',
+                'ArrowRight': 'r_right',
+                'KeyW': 'm_forward',
+                'KeyS': 'm_back',
+                'KeyA': 'm_left',
+                'KeyD': 'm_right',
+            };
+            //console.log(`key=${event.key},members=${[...Object.keys(event)]},code=${event.code}`)
+            const command = KeyToCommand[event.code];
+            if (command) {
+                if (event.type === 'keydown') {
+                    movement[command] = true;
+                } else { /* keyup */
+                    movement[command] = false;
+                }
+                socket.emit('movement', movement);
             }
-            socket.emit('movement', movement);
-        }
-        if (event.key === 'e' && event.type === 'keydown') {
-            socket.emit('shoot');
-        }
-        if (event.key === ' ' && event.type === 'keydown') {
-            socket.emit('jump');
+            else if (event.key === 'e' && event.type === 'keydown') {
+                socket.emit('shoot');
+            }
+            else if (event.key === ' ' && event.type === 'keydown') {
+                socket.emit('jump');
+            }
+            else if (event.key === ' ' && event.type === 'keydown') {
+                socket.emit('jump');
+            }
+            else if (event.key === '/' && event.type === 'keydown'){
+                comment_prompt.value="/"
+                comment_prompt.focus()
+                event.preventDefault()
+            }
+            else if (event.key === 't' && event.type === 'keydown'){
+                comment_prompt.focus()
+                event.preventDefault()
+            }
         }
     }
     document.addEventListener("keydown", tmp)
@@ -345,3 +373,26 @@ socket.on('dead', () => {
     $("#start-screen").show();
     isPlaying = false;
 });
+socket.on("message",(message, type)=>{
+    const tmp = document.createElement("p");
+    tmp.classList.add(type)
+    tmp.innerText=message;
+    comment_div.insertBefore(tmp,comment_div.lastElementChild)
+    setTimeout(()=>{
+        tmp.animate([
+            {
+                opacity: 1
+            },
+            {
+                opacity: 0
+            },
+        ],3000).addEventListener("finish",(ev)=>{
+            tmp.remove()
+        })
+    },12000)
+})
+comment_prompt.addEventListener("keydown",(ev)=>{
+    if(ev.key!="Enter")return
+    socket.emit("comment",comment_prompt.value);
+    comment_prompt.value="";
+})

@@ -169,6 +169,7 @@ class Player extends GameObject {
 		 * @type {number}
 		 */
 		this.sy = 0
+		this.color="lime";
 		do {
 			this.pos.x = Math.random() * (FIELD_SIZE - this.size.x) - this.min.x;
 			this.pos.z = Math.random() * (FIELD_SIZE - this.size.z) - this.min.z;
@@ -214,7 +215,7 @@ class Player extends GameObject {
 				tmp_y=Math.floor(round_E(caster.end.y)/BLOCK_SIZE)-(is_negative&&axis=="y"),
 				tmp_z=Math.floor(round_E(caster.end.z)/BLOCK_SIZE)-(is_negative&&axis=="z");
 			console.log(`place at: (${tmp_x},${tmp_y},${tmp_z})`)
-			let block =Block.place(tmp_x,tmp_y,tmp_z);
+			let block=Block.place(tmp_x,tmp_y,tmp_z,{color:this.color});
 			if([...Object.values(everything.get(Solid)),...Object.values(everything.get(Player))].filter(x=>block.intersect(x)).some(x=>x!=block.solid)){
 				console.log(`collision occured.`)
 				block.remove();

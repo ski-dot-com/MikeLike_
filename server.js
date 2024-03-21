@@ -100,6 +100,16 @@ io.on('connection', function (socket) {
 		player.remove();
 		player = null;
 	});
+	/**
+	 * @param {string} comment 
+	 */
+	function onComment(comment) {
+		if (!player || player.health === 0) { return; }
+		if (comment.startsWith("/"))return runCommand(comment.slice(1),player)
+		if (comment.startsWith("#"))comment=comment.slice(1)
+		sendComment(comment, player.nickname)
+	}
+	socket.on('comment', onComment);
 });
 
 setInterval(() => {
@@ -179,3 +189,50 @@ server.listen(port, () => {
 	console.log(`Starting server on port ${port}`);
 	console.log(`URL: http://localhost:${port}`);
 });
+/**
+ * コメントを送る。
+ * @param {string} message 送るコメント
+ * @param {string} user コメントを送るユーザー名
+ */
+function sendComment(message, user){
+	sendMessage(`[${user}]: `+message,"comment")
+}
+/**
+ * メッセージを送る。
+ * @param {string} message 送るメッセージ
+ * @param {string} user 送るメッセージの種類
+ */
+function sendMessage(message, type){
+	console.log(`${type}: ${message}`)
+	io.sockets.emit('message', message, type);
+}
+/**
+ * コマンドを実行する。
+ * @param {string} command 実行するコマンド
+ * @param {Player} player コマンドを実行したプレイヤー
+ */
+function runCommand(command,player){
+	const args = command.split(/\s/).filter(v=>!!v.length)
+	console.log(args)
+	if(args.length)switch(args[0]){
+		case "set_block_color":
+			if(args.length!=2)return runCommand("help set_block_color",player),sendMessage("[Error]: 呼び出し方が不適切です。","error");
+			sendMessage(`[Info]: ${player.nickname}が手持ちのブロックの色を"${player.color=args[1]}"に変えました。`,"info");
+			return;
+		case "help":
+			if(args.length!=2){
+				sendMessage("set_block_color ブロックの色","info")
+				sendMessage("help [コマンド]","info")
+				return;
+			}
+			switch(args[1]){
+				case "set_block_color":
+					sendMessage("set_block_color ブロックの色","info")
+					return;
+				case "help":
+					sendMessage("help [コマンド]","info")
+					return;
+			}
+	}
+	return runCommand("help",player),sendMessage("[Error]: 不明なコマンドです。","error");
+}
