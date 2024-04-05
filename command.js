@@ -105,33 +105,42 @@ class CommandRunner{
                 case " ,":parse_stack=[];argc+=1;break;
             }
         }
+        /**
+         * @type {any[]}
+         */
         let eval_stack=[];
         for(const op of code){
             switch(op){
                 case " +=":
-                    eval_stack=[eval_stack[1].value=unwrap_refs(eval_stack[1].value)+unwrap_refs(eval_stack[0])]+eval_stack.slice(2)
+                    eval_stack=[eval_stack[1].value=unwrap_refs(eval_stack[1].value)+unwrap_refs(eval_stack[0])]+eval_stack.slice(2);break;
                 case " -=":
-                    eval_stack=[eval_stack[1].value=unwrap_refs(eval_stack[1].value)-unwrap_refs(eval_stack[0])]+eval_stack.slice(2)
+                    eval_stack=[eval_stack[1].value=unwrap_refs(eval_stack[1].value)-unwrap_refs(eval_stack[0])]+eval_stack.slice(2);break;
                 case " *=":
-                    eval_stack=[eval_stack[1].value=unwrap_refs(eval_stack[1].value)*unwrap_refs(eval_stack[0])]+eval_stack.slice(2)
+                    eval_stack=[eval_stack[1].value=unwrap_refs(eval_stack[1].value)*unwrap_refs(eval_stack[0])]+eval_stack.slice(2);break;
                 case " /=":
-                    eval_stack=[eval_stack[1].value=unwrap_refs(eval_stack[1].value)/unwrap_refs(eval_stack[0])]+eval_stack.slice(2)
+                    eval_stack=[eval_stack[1].value=unwrap_refs(eval_stack[1].value)/unwrap_refs(eval_stack[0])]+eval_stack.slice(2);break;
                 case " =":
-                    eval_stack=[eval_stack[1].value=unwrap_refs(eval_stack[0])]+eval_stack.slice(2)
+                    eval_stack=[eval_stack[1].value=unwrap_refs(eval_stack[0])]+eval_stack.slice(2);break;
                 case " +":
-                    eval_stack=[unwrap_refs(eval_stack[1])+unwrap_refs(eval_stack[0])]+eval_stack.slice(2)
+                    eval_stack=[unwrap_refs(eval_stack[1])+unwrap_refs(eval_stack[0])]+eval_stack.slice(2);break;
                 case " -":
-                    eval_stack=[unwrap_refs(eval_stack[1])-unwrap_refs(eval_stack[0])]+eval_stack.slice(2)
+                    eval_stack=[unwrap_refs(eval_stack[1])-unwrap_refs(eval_stack[0])]+eval_stack.slice(2);break;
                 case " *":
-                    eval_stack=[unwrap_refs(eval_stack[1])*unwrap_refs(eval_stack[0])]+eval_stack.slice(2)
+                    eval_stack=[unwrap_refs(eval_stack[1])*unwrap_refs(eval_stack[0])]+eval_stack.slice(2);break;
                 case " /":
-                    eval_stack=[unwrap_refs(eval_stack[1])/unwrap_refs(eval_stack[0])]+eval_stack.slice(2)
+                    eval_stack=[unwrap_refs(eval_stack[1])/unwrap_refs(eval_stack[0])]+eval_stack.slice(2);break;
                 case " .":
-                    eval_stack=[unwrap_refs(eval_stack[1])[unwrap_refs(eval_stack[0])]]+eval_stack.slice(2)
-                    break;
-                    // TODO: breakの追加&callの対応
+                    eval_stack=[unwrap_refs(eval_stack[1])[unwrap_refs(eval_stack[0])]]+eval_stack.slice(2);break;
+                case " call":
+                    {
+                        let argc=unwrap_refs(eval_stack[0])
+                        eval_stack=[unwrap_refs(eval_stack[argc+1])(...eval_stack.slice(1,argc+1).reverse())]+eval_stack.slice(2);break;
+                    }
                 default:
-                    code.push(token)
+                    {
+                        let tmp = Number.parseFloat(token);
+                        eval_stack.unshift(isNaN(tmp)?tmp:stackframe[0][token]);
+                    }
             }
         }
     }
